@@ -27,6 +27,7 @@ public class DiscordConnection : IDisposable
         new("Universalis", ActivityType.Watching),
         new("with the market"),
         new("with the economy"),
+        new("the Containment Units", ActivityType.Watching),
         new("the schedule", ActivityType.Watching)
     };
 
