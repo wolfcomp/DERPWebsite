@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using FFXIVWeather.Lumina;
 using Microsoft.OpenApi.Models;
 using NLog.Web;
 using PDPWebsite;
@@ -25,6 +26,7 @@ builder.Services.AddRouting(o => o.LowercaseUrls = true);
 builder.Services.AddSingleton<EnvironmentContainer>();
 builder.Services.AddSingleton<UniversalisClient>();
 builder.Services.AddSingleton<GameClient>();
+builder.Services.AddSingleton<FFXIVWeatherLuminaService>();
 builder.Services.AddSingleton<DiscordConnection>();
 builder.Services.AddSingleton<RedisClient>();
 builder.Services.AddScoped<AuthFilter>();
