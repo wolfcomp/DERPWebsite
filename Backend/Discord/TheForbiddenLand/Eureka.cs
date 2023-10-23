@@ -1,10 +1,9 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using Microsoft.AspNetCore.NodeServices;
 
 namespace PDPWebsite.Discord.TheForbiddenLand;
 
-[SlashCommand("eureka", "")]
+[SlashCommand("eureka")]
 public class Eureka : ISlashCommandProcessor
 {
     private ILogger<Eureka> _logger;
@@ -17,14 +16,14 @@ public class Eureka : ISlashCommandProcessor
     }
 
     [SlashCommand("fairy", "Shows the recommended path for scouting fairies")]
-    public async Task FairyMap()
+    public async Task FairyMap([SlashCommand("area")] EurekaArea area)
     {
         await _arg.RespondAsync("Thinking...");
 
         var embed = new EmbedBuilder();
         embed.WithTitle("Eureka Fairy Locations");
         embed.WithDescription("This the recommended path when quickly scouting fairies for either BA, or otherwise.");
-        embed.WithImageUrl("https://pdp.wildwolf.dev/Eureka/Maps/hydatos_elem.png");
+        embed.WithImageUrl($"https://pdp.wildwolf.dev/files/04_eureka/02_maps/0{(int)area}_{Enum.GetName(area)!.ToLowerInvariant()}elementals.png");
         
         await _arg.ModifyOriginalResponseAsync(msg =>
         {
@@ -38,4 +37,12 @@ public class Eureka : ISlashCommandProcessor
     {
         await _arg.RespondAsync("Not Implemented");
     }
+}
+
+public enum EurekaArea
+{
+    AMEMOS = 1,
+    PAGOS,
+    PYROS,
+    HYDATOS,
 }
