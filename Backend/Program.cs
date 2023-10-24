@@ -26,7 +26,7 @@ builder.Services.AddRouting(o => o.LowercaseUrls = true);
 builder.Services.AddSingleton<EnvironmentContainer>();
 builder.Services.AddSingleton<UniversalisClient>();
 builder.Services.AddSingleton<GameClient>();
-builder.Services.AddSingleton<FFXIVWeatherLuminaService>();
+builder.Services.AddSingleton(services => new FFXIVWeatherLuminaService(services.GetRequiredService<GameClient>().Game));
 builder.Services.AddSingleton<DiscordConnection>();
 builder.Services.AddSingleton<RedisClient>();
 builder.Services.AddScoped<AuthFilter>();
@@ -122,5 +122,22 @@ public class TimeSpanStringConverter : JsonConverter<TimeSpan>
     public override void Write(Utf8JsonWriter writer, TimeSpan value, JsonSerializerOptions options)
     {
         writer.WriteStringValue(value.ToString("hh':'mm"));
+    }
+}
+
+public static class Extensions
+{
+    public static string ToHumanFormat(this TimeSpan timeSpan)
+    {
+        var str = "";
+        if (timeSpan.Hours > 0)
+        {
+            str += $"{timeSpan.Hours} hour{(timeSpan.Hours > 1 ? "s" : "")} ";
+        }
+        if (timeSpan.Minutes > 0)
+        {
+            str += $"{timeSpan.Minutes} minute{(timeSpan.Minutes > 1 ? "s" : "")} ";
+        }
+        return str + (str.Length > 0 ? "and " : "") + $"{timeSpan.Seconds} second{(timeSpan.Seconds > 1 ? "s" : "")}";
     }
 }
