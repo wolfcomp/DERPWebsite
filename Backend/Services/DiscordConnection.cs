@@ -24,11 +24,13 @@ public class DiscordConnection : IDisposable
     private NLog.LogLevel _logLevel = NLog.LogLevel.Warn;
     private List<Game> Games { get; } = new()
     {
-        new("Universalis", ActivityType.Watching),
-        new("with the market"),
-        new("with the economy"),
-        new("the Containment Units", ActivityType.Watching),
-        new("the schedule", ActivityType.Watching)
+        new ("Universalis", ActivityType.Watching),
+        new ("with the market"),
+        new ("with the economy"),
+        new ("the Containment Units", ActivityType.Watching),
+        new ("the schedule", ActivityType.Watching),
+        new ("the weather", ActivityType.Watching),
+        new ("the Celestium", ActivityType.Watching)
     };
 
     public static Action? OnReady { get; set; }
@@ -131,10 +133,10 @@ public class DiscordConnection : IDisposable
 
         foreach (var slashCommandProcessor in _slashCommandProcessors)
         {
-            var slashCommandBuiler = new SlashCommandBuilder();
-            slashCommandBuiler.WithName(slashCommandProcessor.Name.SanitizeName());
+            var slashCommandBuilder = new SlashCommandBuilder();
+            slashCommandBuilder.WithName(slashCommandProcessor.Name.SanitizeName());
             var slashCommand = slashCommandProcessor.GetCustomAttribute<SlashCommandAttribute>();
-            slashCommand?.SetBuilder(slashCommandBuiler);
+            slashCommand?.SetBuilder(slashCommandBuilder);
             var methods = slashCommandProcessor.GetMethods();
             foreach (var methodInfo in methods)
             {
@@ -196,9 +198,9 @@ public class DiscordConnection : IDisposable
                     slashCommandParamBuilder.WithRequired(required);
                     slashCommandOptionBuilder.AddOption(slashCommandParamBuilder);
                 }
-                slashCommandBuiler.AddOption(slashCommandOptionBuilder);
+                slashCommandBuilder.AddOption(slashCommandOptionBuilder);
             }
-            commandBuilders.Add(slashCommandBuiler);
+            commandBuilders.Add(slashCommandBuilder);
         enumEscape:;
         }
 
@@ -261,7 +263,7 @@ public class DiscordConnection : IDisposable
                         { } t when t == typeof(int) => Convert.ToInt32(paramOption.Value),
                         { } t when t == typeof(ulong) => Convert.ToUInt64(paramOption.Value),
                         { } t when t == typeof(long) => paramOption.Value,
-                        { } t when t == typeof(uint) => Convert.ToUInt32(paramOption.Value),  
+                        { } t when t == typeof(uint) => Convert.ToUInt32(paramOption.Value),
                         { } t when t == typeof(short) => Convert.ToInt16(paramOption.Value),
                         { } t when t == typeof(ushort) => Convert.ToUInt16(paramOption.Value),
                         { } t when t == typeof(byte) => Convert.ToByte(paramOption.Value),
