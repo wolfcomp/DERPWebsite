@@ -58,7 +58,13 @@ public class Market : ISlashCommandProcessor
             {
                 var countLeft = ItemCountLeft.Replace("%d", $"{itemDatas.Count - i}");
                 var str = $"`{i + 1}` {itemDatas[i].Name}";
-                sb.AppendLine(sb.Length + str.Length < 4096 - countLeft.Length ? str : countLeft);
+                if (sb.Length + str.Length < 4096 - countLeft.Length)
+                    sb.AppendLine(str);
+                else
+                {
+                    sb.AppendLine(countLeft);
+                    break;
+                }
             }
 
             builder.WithTitle($"Multiple items with name `{item}`");
