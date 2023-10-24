@@ -18,8 +18,6 @@ public class Eureka : ISlashCommandProcessor
     [SlashCommand("fairy", "Shows the recommended path for scouting fairies")]
     public async Task FairyMap([SlashCommand("area")] EurekaArea area)
     {
-        await _arg.RespondAsync("Thinking...");
-
         var embed = new EmbedBuilder();
         embed.WithTitle("Eureka Fairy Locations");
         embed.WithDescription("This the recommended path when quickly scouting fairies for either BA, or otherwise.");
