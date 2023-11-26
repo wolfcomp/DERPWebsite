@@ -6,14 +6,11 @@ namespace PDPWebsite.Services;
 
 public class RedisClient
 {
-    private ILogger<RedisClient> _logger;
-
-    public RedisClient(ILogger<RedisClient> logger)
+    public RedisClient()
     {
-        _logger = logger;
     }
 
-    private static TimeSpan expireConstant = new(7, 0, 0, 0);
+    private static readonly TimeSpan expireConstant = new(7, 0, 0, 0);
 
     public ConnectionMultiplexer Connection { get; set; } = ConnectionMultiplexer.Connect("localhost");
 

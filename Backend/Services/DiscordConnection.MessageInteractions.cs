@@ -7,10 +7,9 @@ public partial class DiscordConnection
 {
     private async Task DiscordClientOnModalSubmitted(SocketModal arg)
     {
-        _logger.LogTrace($"DiscordClientOnModalSubmitted: {arg}");
+        _logger.LogTrace("DiscordClientOnModalSubmitted: {arg}", arg);
         var user = (SocketGuildUser)arg.User;
         var channel = user.VoiceChannel;
-        ulong ownerId;
         switch (arg.Data.CustomId)
         {
             case "rename":
@@ -19,12 +18,11 @@ public partial class DiscordConnection
                     await arg.RespondAsync("Must be in a voice channel", ephemeral: true);
                     return;
                 }
-                if (!TempChannels.ContainsKey(channel!.Id))
+                if (!TempChannels.TryGetValue(channel!.Id, out ulong ownerId))
                 {
                     await arg.RespondAsync("Channel is not a temp channel", ephemeral: true);
                     return;
                 }
-                ownerId = TempChannels[channel.Id];
                 if (ownerId != user.Id)
                 {
                     await arg.RespondAsync("You are not the owner of this channel", ephemeral: true);
@@ -45,7 +43,7 @@ public partial class DiscordConnection
 
     private async Task MessageInteractionExecuted(SocketMessageComponent arg)
     {
-        _logger.LogTrace($"MessageInteractionExecuted: {arg.Data.CustomId}");
+        _logger.LogTrace("MessageInteractionExecuted: {id}", arg.Data.CustomId);
         var user = (SocketGuildUser)arg.User;
         var channel = user.VoiceChannel;
         ulong ownerId;
@@ -57,12 +55,11 @@ public partial class DiscordConnection
                     await arg.RespondAsync("Must be in a voice channel", ephemeral: true);
                     return;
                 }
-                if (!TempChannels.ContainsKey(channel!.Id))
+                if (!TempChannels.TryGetValue(channel!.Id, out ownerId))
                 {
                     await arg.RespondAsync("Channel is not a temp channel", ephemeral: true);
                     return;
                 }
-                ownerId = TempChannels[channel.Id];
                 if (ownerId != user.Id)
                 {
                     await arg.RespondAsync("You are not the owner of this channel", ephemeral: true);
@@ -82,12 +79,11 @@ public partial class DiscordConnection
                     await arg.RespondAsync("Must be in a voice channel", ephemeral: true);
                     return;
                 }
-                if (!TempChannels.ContainsKey(channel!.Id))
+                if (!TempChannels.TryGetValue(channel!.Id, out ownerId))
                 {
                     await arg.RespondAsync("Channel is not a temp channel", ephemeral: true);
                     return;
                 }
-                ownerId = TempChannels[channel.Id];
                 if (channel.ConnectedUsers.Any(x => x.Id == ownerId))
                 {
                     await arg.RespondAsync("Owner is still in the channel", ephemeral: true);
@@ -102,12 +98,11 @@ public partial class DiscordConnection
                     await arg.RespondAsync("Must be in a voice channel", ephemeral: true);
                     return;
                 }
-                if (!TempChannels.ContainsKey(channel!.Id))
+                if (!TempChannels.TryGetValue(channel!.Id, out ownerId))
                 {
                     await arg.RespondAsync("Channel is not a temp channel", ephemeral: true);
                     return;
                 }
-                ownerId = TempChannels[channel.Id];
                 if (ownerId != user.Id)
                 {
                     await arg.RespondAsync("You are not the owner of this channel", ephemeral: true);
@@ -126,12 +121,11 @@ public partial class DiscordConnection
                     await arg.RespondAsync("Must be in a voice channel", ephemeral: true);
                     return;
                 }
-                if (!TempChannels.ContainsKey(channel!.Id))
+                if (!TempChannels.TryGetValue(channel!.Id, out ownerId))
                 {
                     await arg.RespondAsync("Channel is not a temp channel", ephemeral: true);
                     return;
                 }
-                ownerId = TempChannels[channel.Id];
                 if (ownerId != user.Id)
                 {
                     await arg.RespondAsync("You are not the owner of this channel", ephemeral: true);

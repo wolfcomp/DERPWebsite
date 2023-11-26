@@ -87,13 +87,13 @@ namespace PDPWebsite.Universalis
         [JsonProperty("worldName")]
         public string WorldName { get; init; }
 
-        public Plot GetPlot(IEnumerable<Item> items, bool errorBars = false)
+        public Plot GetPlot(IEnumerable<Item> items)
         {
             var plt = new Plot();
             var salesTmp = Sales.Select(t => new SanitizedSale(t)).GroupBy(t => t.Date);
 
             var list = salesTmp.Select(f => new ProcessedSale(f)).OrderBy(t => t.Date).ToList();
-            list.GetSalesPlot(plt, errorBars);
+            list.GetSalesPlot(plt);
             plt.Legend();
             plt.Title($"Average Price of {items.First(t => t.Id == ItemId)!.Name}");
             plt.YLabel("Price");
@@ -246,7 +246,7 @@ namespace PDPWebsite.Universalis
             return values.ToDictionary(key, value, EqualityComparer<TK>.Default).OrderBy(t => t.Key).ToDictionary(t => t.Key, t => t.Value);
         }
 
-        public static void GetSalesPlot(this IEnumerable<ProcessedSale> sales, Plot plt, bool errorBars)
+        public static void GetSalesPlot(this IEnumerable<ProcessedSale> sales, Plot plt)
         {
             var avgSales = sales.ToDictionaryOrdered(sale => sale.Date.ToOADate(), sale => sale.AveragePrice);
             var avgSalesNq = sales.Where(sale => sale.AveragePriceNq.HasValue).ToDictionaryOrdered(sale => sale.Date.ToOADate(), sale => sale.AveragePriceNq!.Value);

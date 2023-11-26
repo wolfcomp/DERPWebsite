@@ -87,7 +87,7 @@ public partial class DiscordConnection
                         var values = Enum.GetValues(paramType);
                         if (values.Length > 25)
                         {
-                            _logger.LogError($"Enum {paramType.Name} has more than 25 values, this is not supported by discord.");
+                            _logger.LogError("Enum {name} has more than 25 values, this is not supported by discord.", paramType.Name);
                             goto enumEscape;
                         }
                         foreach (var value in values)
@@ -182,7 +182,7 @@ public partial class DiscordConnection
                             _ when typeSafe == typeof(SocketUser) => paramOption.Value,
                             _ when typeSafe == typeof(SocketChannel) => paramOption.Value,
                             _ when typeSafe == typeof(Attachment) => paramOption.Value,
-                            _ => throw new ArgumentOutOfRangeException(nameof(typeSafe), typeSafe, $"Could not match type with {typeSafe.Name}")
+                            _ => throw new ArgumentOutOfRangeException(typeSafe.Name, typeSafe, $"Could not match type with {typeSafe.Name}")
                         })!);
                     }
                 }
@@ -197,7 +197,7 @@ public partial class DiscordConnection
         }
         catch (Exception e)
         {
-            _logger.LogError(e, $"SlashCommandExecuted failed while executing: `/{command} {subCommand}` with args: {string.Join(", ", args.Select(t => t.ToString()))}");
+            _logger.LogError(e, "SlashCommandExecuted failed while executing: `/{command} {subCommand}` with args: {args}", command, subCommand, string.Join(", ", args.Select(t => t.ToString())));
         }
     }
 }

@@ -11,12 +11,11 @@ public partial class Voice
     {
         var user = (SocketGuildUser)_arg.User;
         var channel = user.VoiceChannel;
-        if (!_discord.TempChannels.ContainsKey(channel.Id))
+        if (!_discord.TempChannels.TryGetValue(channel.Id, out ulong ownerId))
         {
             await _arg.ModifyOriginalResponseAsync(msg => msg.Content = "Channel is not a temp channel");
             return;
         }
-        var ownerId = _discord.TempChannels[channel.Id];
         if (channel.ConnectedUsers.Any(x => x.Id == ownerId))
         {
             await _arg.ModifyOriginalResponseAsync(msg => msg.Content = "Owner is still in the channel");
@@ -31,12 +30,11 @@ public partial class Voice
     {
         var user = (SocketGuildUser)_arg.User;
         var channel = user.VoiceChannel;
-        if (!_discord.TempChannels.ContainsKey(channel.Id))
+        if (!_discord.TempChannels.TryGetValue(channel.Id, out ulong ownerId))
         {
             await _arg.ModifyOriginalResponseAsync(msg => msg.Content = "Channel is not a temp channel");
             return;
         }
-        var ownerId = _discord.TempChannels[channel.Id];
         if (ownerId != user.Id)
         {
             await _arg.ModifyOriginalResponseAsync(msg => msg.Content = "You are not the owner of this channel");
@@ -73,12 +71,11 @@ public partial class Voice
     {
         var user = (SocketGuildUser)_arg.User;
         var channel = user.VoiceChannel;
-        if (!_discord.TempChannels.ContainsKey(channel.Id))
+        if (!_discord.TempChannels.TryGetValue(channel.Id, out ulong ownerId))
         {
             await _arg.ModifyOriginalResponseAsync(msg => msg.Content = "Channel is not a temp channel");
             return;
         }
-        var ownerId = _discord.TempChannels[channel.Id];
         if (ownerId != user.Id)
         {
             await _arg.ModifyOriginalResponseAsync(msg => msg.Content = "You are not the owner of this channel");
@@ -103,12 +100,11 @@ public partial class Voice
     {
         var user = (SocketGuildUser)_arg.User;
         var channel = user.VoiceChannel;
-        if (!_discord.TempChannels.ContainsKey(channel.Id))
+        if (!_discord.TempChannels.TryGetValue(channel.Id, out ulong ownerId))
         {
             await _arg.ModifyOriginalResponseAsync(msg => msg.Content = "Channel is not a temp channel");
             return;
         }
-        var ownerId = _discord.TempChannels[channel.Id];
         if (ownerId != user.Id)
         {
             await _arg.ModifyOriginalResponseAsync(msg => msg.Content = "You are not the owner of this channel");
@@ -126,12 +122,11 @@ public partial class Voice
     {
         var user = (SocketGuildUser)_arg.User;
         var channel = user.VoiceChannel;
-        if (!_discord.TempChannels.ContainsKey(channel.Id))
+        if (!_discord.TempChannels.TryGetValue(channel.Id, out ulong ownerId))
         {
             await _arg.ModifyOriginalResponseAsync(msg => msg.Content = "Channel is not a temp channel");
             return;
         }
-        var ownerId = _discord.TempChannels[channel.Id];
         if (ownerId != user.Id)
         {
             await _arg.ModifyOriginalResponseAsync(msg => msg.Content = "You are not the owner of this channel");

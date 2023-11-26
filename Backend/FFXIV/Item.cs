@@ -12,7 +12,7 @@ public class Item
     public string Name;
     public ushort Icon;
 
-    private GameClient _gameData;
+    private readonly GameClient _gameData;
 
     public Item(GameClient gameClient)
     {

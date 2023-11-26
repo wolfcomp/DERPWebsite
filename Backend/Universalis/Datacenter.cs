@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json;
+﻿#pragma warning disable CA1507
+
+using Newtonsoft.Json;
 
 namespace PDPWebsite.Universalis
 {

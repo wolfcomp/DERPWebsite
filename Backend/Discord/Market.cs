@@ -24,7 +24,7 @@ public class Market : ISlashCommandProcessor
     }
 
     [SlashCommand("search", "Searches the market for an item")]
-    public async Task Search([SlashCommand("item", "The item to search for")] string item, [SlashCommand("server", "The server to search on")] string server, [SlashCommand("error-bars", "Shows error bars in the graph")] bool? errorBars)
+    public async Task Search([SlashCommand("item", "The item to search for")] string item, [SlashCommand("server", "The server to search on")] string server)
     {
         var worlds = await _universalisClient.GetWorlds();
         var datacenters = await _universalisClient.GetDatacenters();
@@ -36,7 +36,7 @@ public class Market : ISlashCommandProcessor
             names.Add(datacenter.Region);
             names.AddRange(datacenter.Worlds.Select(x => worlds.First(t => t.Id == x).Name));
         }
-        _logger.LogTrace($"Trying with server: {server} and item: {item}");
+        _logger.LogTrace("Trying with server: {server} and item: {item}", server, item);
         if (!names.Any(t => string.Equals(t, server, StringComparison.InvariantCultureIgnoreCase)))
         {
             await _arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Could not find server {server}");
@@ -49,7 +49,7 @@ public class Market : ISlashCommandProcessor
             await _arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Could not find item {item}");
             return;
         }
-        _logger.LogTrace($"Found server and item count {itemDatas.Count}");
+        _logger.LogTrace("Found server and item count {count}", itemDatas.Count);
         var builder = new EmbedBuilder();
         var sb = new StringBuilder();
         if (itemDatas.Count > 1)
@@ -70,13 +70,13 @@ public class Market : ISlashCommandProcessor
             });
             return;
         }
-        _logger.LogTrace($"Found item {itemDatas[0].Name}");
+        _logger.LogTrace("Found item {name}", itemDatas[0].Name);
         var itemData = itemDatas.First();
         var listing = await _universalisClient.GetListing(server, itemData.Id);
         var history = await _universalisClient.GetHistory(server, itemData.Id);
         _logger.LogTrace($"Got listing and history");
         var priceHistory = history.GetPriceHistory();
-        var hPlt = history.GetPlot(_gameClient.MarketItems, errorBars ?? false).GetImage(1100, 400);
+        var hPlt = history.GetPlot(_gameClient.MarketItems).GetImage(1100, 400);
         var mPlt = listing.GetPlot().GetImage(1100, 200);
         var plt = new SKBitmap(1100, 600);
         using (var canvas = new SKCanvas(plt))
@@ -184,16 +184,16 @@ public class Market : ISlashCommandProcessor
             return;
         }
 
-        _logger.LogTrace($"Trying with server {server}");
+        _logger.LogTrace("Trying with server {server}", server);
         if (!worlds.Any(t => string.Equals(t.Name, server, StringComparison.InvariantCultureIgnoreCase)))
         {
             await _arg.ModifyOriginalResponseAsync(msg => msg.Content = $"No world exists of name: {server}");
             return;
         }
         var world = worlds.First(t => string.Equals(t.Name, server, StringComparison.InvariantCultureIgnoreCase));
-        _logger.LogTrace($"Found server {world.Name}");
+        _logger.LogTrace("Found server {name}", world.Name);
         var tax = await _universalisClient.GetTaxRates(world.Id);
-        _logger.LogTrace($"Got tax data: {tax}");
+        _logger.LogTrace("Got tax data: {tax}", tax);
         var embedBuilder = new EmbedBuilder();
         embedBuilder.WithTitle($"Market tax rates for: {world.Name}");
         embedBuilder.AddField("Limsa Lominsa", $"{tax.LimsaLominsa}%", true);

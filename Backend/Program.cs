@@ -99,28 +99,30 @@ discord.Dispose();
 
 LogManager.Shutdown();
 
-public class UlongStringConverter : JsonConverter<ulong>
-{
-    public override ulong Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+namespace PDPWebsite {
+    public class UlongStringConverter : JsonConverter<ulong>
     {
-        return ulong.Parse(reader.GetString()!);
+        public override ulong Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            return ulong.Parse(reader.GetString()!);
+        }
+
+        public override void Write(Utf8JsonWriter writer, ulong value, JsonSerializerOptions options)
+        {
+            writer.WriteStringValue(value.ToString());
+        }
     }
 
-    public override void Write(Utf8JsonWriter writer, ulong value, JsonSerializerOptions options)
+    public class TimeSpanStringConverter : JsonConverter<TimeSpan>
     {
-        writer.WriteStringValue(value.ToString());
-    }
-}
+        public override TimeSpan Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            return TimeSpan.Parse(reader.GetString()!, new DateTimeFormatInfo { ShortTimePattern = "hh':'mm" });
+        }
 
-public class TimeSpanStringConverter : JsonConverter<TimeSpan>
-{
-    public override TimeSpan Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-    {
-        return TimeSpan.Parse(reader.GetString()!, new DateTimeFormatInfo { ShortTimePattern = "hh':'mm" });
-    }
-
-    public override void Write(Utf8JsonWriter writer, TimeSpan value, JsonSerializerOptions options)
-    {
-        writer.WriteStringValue(value.ToString("hh':'mm"));
+        public override void Write(Utf8JsonWriter writer, TimeSpan value, JsonSerializerOptions options)
+        {
+            writer.WriteStringValue(value.ToString("hh':'mm"));
+        }
     }
 }

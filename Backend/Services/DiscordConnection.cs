@@ -88,7 +88,7 @@ public partial class DiscordConnection : IDisposable
             LogSeverity.Verbose => MSLogLevel.Trace,
             LogSeverity.Debug => MSLogLevel.Debug,
             _ => MSLogLevel.Information
-        }, arg.Exception, arg.Message);
+        }, arg.Exception, "{message}", arg.Message);
         return Task.CompletedTask;
     }
 
@@ -140,6 +140,7 @@ public partial class DiscordConnection : IDisposable
     public void Dispose()
     {
         DisposeAsync().GetAwaiter().GetResult();
+        GC.SuppressFinalize(this);
     }
 
     public bool ShouldLog(NLogLevel logEventLevel)
