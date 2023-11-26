@@ -1,9 +1,9 @@
-﻿using Discord.Net;
-using Discord.WebSocket;
+﻿using System.Reflection;
 using Discord;
+using Discord.Net;
+using Discord.WebSocket;
 using Newtonsoft.Json;
 using PDPWebsite.Discord;
-using System.Reflection;
 
 namespace PDPWebsite.Services;
 
@@ -102,7 +102,7 @@ public partial class DiscordConnection
                 slashCommandBuiler.AddOption(slashCommandOptionBuilder);
             }
             commandBuilders.Add(slashCommandBuiler);
-        enumEscape:;
+            enumEscape: ;
         }
 
         try
@@ -188,7 +188,9 @@ public partial class DiscordConnection
                 }
             }
             while (args.Count != parameters.Length)
+            {
                 args.Add(null!);
+            }
 
             if (method.ReturnType == typeof(Task))
                 await ((Task?)method.Invoke(instance, args.ToArray()))!;

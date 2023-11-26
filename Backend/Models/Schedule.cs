@@ -1,6 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-
-namespace PDPWebsite.Models;
+﻿namespace PDPWebsite.Models;
 
 public record Schedule(Guid? Id, string Name, ulong HostId, TimeSpan Duration, DateTime At)
 {

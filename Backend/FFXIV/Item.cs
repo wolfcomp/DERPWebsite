@@ -6,29 +6,26 @@ namespace PDPWebsite.FFXIV;
 
 public class Item
 {
-    public uint Id;
-    public string Singular;
-    public string Plural;
-    public string Name;
-    public ushort Icon;
+    private const string IconFileFormat = "ui/icon/{0:D3}000/{1}{2:D6}.tex";
+    private const string IconHDFileFormat = "ui/icon/{0:D3}000/{1}{2:D6}_hr1.tex";
 
-    private GameClient _gameData;
+    private readonly GameClient _gameData;
+    public ushort Icon;
+    public uint Id;
+    public string Name;
+    public string Plural;
+    public string Singular;
 
     public Item(GameClient gameClient)
     {
         _gameData = gameClient;
     }
 
-    private const string IconFileFormat = "ui/icon/{0:D3}000/{1}{2:D6}.tex";
-    private const string IconHDFileFormat = "ui/icon/{0:D3}000/{1}{2:D6}_hr1.tex";
-    
     public unsafe SKBitmap? GetIconTexture()
     {
         var texFile = _gameData.GetTexFile(string.Format(IconHDFileFormat, Icon / 1000, string.Empty, Icon));
         if (texFile == default(TexFile))
-        {
             texFile = _gameData.GetTexFile(string.Format(IconFileFormat, Icon / 1000, string.Empty, Icon));
-        }
         if (texFile == null) return null;
         fixed (byte* p = texFile.ImageData)
         {
@@ -40,7 +37,7 @@ public class Item
     }
 }
 
-public static partial class Extension
+public static class Extension
 {
     public static IEnumerable<Item> SearchItem(this IEnumerable<Item> items, string name)
     {

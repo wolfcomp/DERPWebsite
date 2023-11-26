@@ -7,9 +7,9 @@ namespace PDPWebsite.Controllers;
 [ApiController]
 public class AboutInfoController : ControllerBase
 {
+    private readonly EnvironmentContainer _container;
     private readonly Database _database;
     private readonly DiscordConnection _discord;
-    private readonly EnvironmentContainer _container;
     private readonly IHubContext<MainHub> _hub;
 
     public AboutInfoController(Database database, EnvironmentContainer container, DiscordConnection discord, IHubContext<MainHub> hub)
@@ -49,7 +49,8 @@ public class AboutInfoController : ControllerBase
         return Ok(ret);
     }
 
-    [HttpGet, ServiceFilter(typeof(AuthFilter))]
+    [HttpGet]
+    [ServiceFilter(typeof(AuthFilter))]
     [Route("users")]
     public async Task<IActionResult> GetUsers()
     {
@@ -58,7 +59,8 @@ public class AboutInfoController : ControllerBase
         return Ok(users.Select(t => new { t.Id, Name = aboutInfo.FirstOrDefault(f => f.Id == t.Id)?.VisualName ?? t.DisplayName, Avatar = t.GetDisplayAvatarUrl() }));
     }
 
-    [HttpPut, ServiceFilter(typeof(AuthFilter))]
+    [HttpPut]
+    [ServiceFilter(typeof(AuthFilter))]
     public async Task<IActionResult> PostAboutInfo([FromBody] AboutInfo aboutInfo)
     {
         aboutInfo.VisualName = aboutInfo.VisualName?.Trim();
@@ -79,13 +81,9 @@ public class AboutInfoController : ControllerBase
             aboutInfo.VisualName = null;
 
         if (await _database.AboutInfos.AnyAsync(t => t.Id == aboutInfo.Id))
-        {
             _database.AboutInfos.Update(aboutInfo);
-        }
         else
-        {
             await _database.AboutInfos.AddAsync(aboutInfo);
-        }
         await _database.SaveChangesAsync();
         await _hub.Clients.All.SendAsync("AboutInfoUpdated", aboutInfo);
         return Ok();

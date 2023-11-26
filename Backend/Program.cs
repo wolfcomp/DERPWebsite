@@ -80,8 +80,8 @@ app.UseCors();
 app.UseMiddleware<CorsMiddleware>();
 app.UseMiddleware<OptionsMiddleware>();
 app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller}/{action=Index}/{id?}");
+    "default",
+    "{controller}/{action=Index}/{id?}");
 var discord = app.Services.GetRequiredService<DiscordConnection>();
 await discord.Start();
 await using (var scope = app.Services.CreateAsyncScope())

@@ -8,11 +8,10 @@ namespace PDPWebsite.Services;
 
 public class GameClient : IDisposable
 {
-    private readonly GameData _gameData;
     private readonly UniversalisClient _client;
+    private readonly GameData _gameData;
 
-    private List<Item> _marketItems = new();
-    public IReadOnlyList<Item> MarketItems => _marketItems;
+    private readonly List<Item> _marketItems = new();
 
     public GameClient(UniversalisClient client)
     {
@@ -30,6 +29,12 @@ public class GameClient : IDisposable
         };
         _client = client;
         LoadMarket().GetAwaiter().GetResult();
+    }
+
+    public IReadOnlyList<Item> MarketItems => _marketItems;
+
+    public void Dispose()
+    {
     }
 
     private async Task LoadMarket()
@@ -52,11 +57,13 @@ public class GameClient : IDisposable
             }
     }
 
-    public TexFile? GetTexFile(string path) => _gameData.GetFile<TexFile>(path);
-
-    public ExcelSheet<T>? GetSheet<T>() where T : ExcelRow => _gameData.GetExcelSheet<T>();
-
-    public void Dispose()
+    public TexFile? GetTexFile(string path)
     {
+        return _gameData.GetFile<TexFile>(path);
+    }
+
+    public ExcelSheet<T>? GetSheet<T>() where T : ExcelRow
+    {
+        return _gameData.GetExcelSheet<T>();
     }
 }

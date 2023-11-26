@@ -1,5 +1,5 @@
-﻿using Discord.WebSocket;
-using Discord;
+﻿using Discord;
+using Discord.WebSocket;
 
 namespace PDPWebsite.Services;
 
@@ -31,9 +31,9 @@ public partial class DiscordConnection
                     return;
                 }
                 var name = arg.Data.Components.First(t => t.CustomId == "name").Value;
-                var names = _redisClient.GetObj<Dictionary<ulong, string>>($"voice_names") ?? new Dictionary<ulong, string>();
+                var names = _redisClient.GetObj<Dictionary<ulong, string>>("voice_names") ?? new Dictionary<ulong, string>();
                 names[user.Id] = name;
-                _redisClient.SetObj($"voice_names", names);
+                _redisClient.SetObj("voice_names", names);
                 await channel.ModifyAsync(x => x.Name = name);
                 await arg.RespondAsync("Channel name updated", ephemeral: true);
                 break;

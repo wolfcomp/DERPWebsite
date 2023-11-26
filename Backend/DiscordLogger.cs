@@ -1,5 +1,4 @@
 ﻿using Discord;
-using Discord.WebSocket;
 using NLog.Targets;
 
 namespace PDPWebsite;
@@ -7,9 +6,8 @@ namespace PDPWebsite;
 [Target("Discord")]
 public class DiscordLogger : TargetWithLayout
 {
-    private DiscordConnection? Connection => DiscordConnection.Instance;
-    private Queue<LogEventInfo> _logQueue = new();
-    private Queue<Embed> _embeds = new();
+    private readonly Queue<Embed> _embeds = new();
+    private readonly Queue<LogEventInfo> _logQueue = new();
 
     public DiscordLogger()
     {
@@ -53,6 +51,8 @@ public class DiscordLogger : TargetWithLayout
         };
     }
 
+    private DiscordConnection? Connection => DiscordConnection.Instance;
+
     private void WriteDiscord(LogEventInfo logEvent)
     {
         var message = Layout.Render(logEvent);
@@ -80,7 +80,7 @@ public class DiscordLogger : TargetWithLayout
             return;
         }
         if (Connection.ShouldLog(logEvent.Level))
-            return; 
+            return;
         WriteDiscord(logEvent);
     }
 }

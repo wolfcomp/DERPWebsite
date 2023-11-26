@@ -29,7 +29,6 @@ public class StatusController : ControllerBase
 [JsonConverter(typeof(StatusHttpConverter))]
 public record StatusHttp(SeString Name, SeString Description, bool CanDispel, uint Icon)
 {
-
     public static implicit operator StatusHttp(Status status)
     {
         return new StatusHttp(status.Name, status.Description, status.CanDispel, status.Icon);

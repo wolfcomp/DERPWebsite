@@ -1,19 +1,20 @@
-﻿using Discord;
-using SkiaSharp;
-using System.Text;
+﻿using System.Text;
+using Discord;
 using Discord.WebSocket;
+using SkiaSharp;
 
 namespace PDPWebsite.Discord;
 
-[SlashCommand("market", "Market related commands"), AllowedChannel(1065695099285155980)]
+[SlashCommand("market", "Market related commands")]
+[AllowedChannel(1065695099285155980)]
 public class Market : ISlashCommandProcessor
 {
-    private readonly UniversalisClient _universalisClient;
-    private readonly GameClient _gameClient;
-    private readonly ILogger<Market> _logger;
-    private readonly SocketSlashCommand _arg;
     private const string ItemCountLeft = "With %d more";
     private const string Gil = "<:gil:1077843055941533768>";
+    private readonly SocketSlashCommand _arg;
+    private readonly GameClient _gameClient;
+    private readonly ILogger<Market> _logger;
+    private readonly UniversalisClient _universalisClient;
 
     public Market(UniversalisClient universalisClient, ILogger<Market> logger, GameClient gameClient, SocketSlashCommand arg)
     {
@@ -74,7 +75,7 @@ public class Market : ISlashCommandProcessor
         var itemData = itemDatas.First();
         var listing = await _universalisClient.GetListing(server, itemData.Id);
         var history = await _universalisClient.GetHistory(server, itemData.Id);
-        _logger.LogTrace($"Got listing and history");
+        _logger.LogTrace("Got listing and history");
         var priceHistory = history.GetPriceHistory();
         var hPlt = history.GetPlot(_gameClient.MarketItems, errorBars ?? false).GetImage(1100, 400);
         var mPlt = listing.GetPlot().GetImage(1100, 200);
@@ -142,7 +143,7 @@ public class Market : ISlashCommandProcessor
         var datacenters = await _universalisClient.GetDatacenters();
         if (!worlds.Any() || !datacenters.Any())
         {
-            await _arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Could not retrieve datacenters or worlds.");
+            await _arg.ModifyOriginalResponseAsync(msg => msg.Content = "Could not retrieve datacenters or worlds.");
             return;
         }
         _logger.LogTrace("Filtering worlds");
@@ -180,7 +181,7 @@ public class Market : ISlashCommandProcessor
         var worlds = await _universalisClient.GetWorlds();
         if (!worlds.Any())
         {
-            await _arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Could not retrieve worlds.");
+            await _arg.ModifyOriginalResponseAsync(msg => msg.Content = "Could not retrieve worlds.");
             return;
         }
 

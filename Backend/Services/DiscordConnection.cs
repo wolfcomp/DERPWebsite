@@ -10,32 +10,21 @@ namespace PDPWebsite.Services;
 
 public partial class DiscordConnection : IDisposable
 {
-    public DiscordSocketClient DiscordClient { get; }
-    public SocketGuild? Guild { get; private set; }
+    private readonly CancellationTokenSource _cts = new();
+    private readonly EnvironmentContainer _environmentContainer;
+    private readonly ILogger<DiscordConnection> _logger;
+    private readonly IServiceProvider _provider;
+    private readonly RedisClient _redisClient;
+    private NLogLevel _logLevel = NLogLevel.Warn;
+    private Type[] _slashCommandProcessors = Array.Empty<Type>();
+    private SocketVoiceChannel _tempVoiceChannel = null!;
     public SocketTextChannel? LogChannel;
+
     /// <summary>
-    /// Key: VoiceChannelId
-    /// Value: UserId
+    ///     Key: VoiceChannelId
+    ///     Value: UserId
     /// </summary>
     public ConcurrentDictionary<ulong, ulong> TempChannels;
-    private readonly EnvironmentContainer _environmentContainer;
-    private readonly IServiceProvider _provider;
-    private readonly ILogger<DiscordConnection> _logger;
-    private readonly RedisClient _redisClient;
-    private readonly CancellationTokenSource _cts = new();
-    private Type[] _slashCommandProcessors = Array.Empty<Type>();
-    private NLogLevel _logLevel = NLogLevel.Warn;
-    private SocketVoiceChannel _tempVoiceChannel = null!;
-    private List<Game> Games { get; } = new()
-    {
-        new("Universalis", ActivityType.Watching),
-        new("with the market"),
-        new("with the economy"),
-        new("the schedule", ActivityType.Watching)
-    };
-
-    public static Action? OnReady { get; set; }
-    public static DiscordConnection? Instance { get; set; }
 
     public DiscordConnection(ILogger<DiscordConnection> logger, EnvironmentContainer environmentContainer, RedisClient redisClient, IServiceProvider provider)
     {
@@ -63,6 +52,25 @@ public partial class DiscordConnection : IDisposable
         _redisClient = redisClient;
         TempChannels = _redisClient.GetObj<ConcurrentDictionary<ulong, ulong>>("discord_temp_channels") ?? new ConcurrentDictionary<ulong, ulong>();
         Instance = this;
+    }
+
+    public DiscordSocketClient DiscordClient { get; }
+    public SocketGuild? Guild { get; private set; }
+
+    private List<Game> Games { get; } = new()
+    {
+        new Game("Universalis", ActivityType.Watching),
+        new Game("with the market"),
+        new Game("with the economy"),
+        new Game("the schedule", ActivityType.Watching)
+    };
+
+    public static Action? OnReady { get; set; }
+    public static DiscordConnection? Instance { get; set; }
+
+    public void Dispose()
+    {
+        DisposeAsync().GetAwaiter().GetResult();
     }
 
     public async Task Start()
@@ -137,11 +145,6 @@ public partial class DiscordConnection : IDisposable
         _cts.Cancel();
     }
 
-    public void Dispose()
-    {
-        DisposeAsync().GetAwaiter().GetResult();
-    }
-
     public bool ShouldLog(NLogLevel logEventLevel)
     {
         return logEventLevel < _logLevel;
@@ -161,5 +164,8 @@ public partial class DiscordConnection : IDisposable
         };
     }
 
-    public NLogLevel GetLogLevel() => _logLevel;
+    public NLogLevel GetLogLevel()
+    {
+        return _logLevel;
+    }
 }

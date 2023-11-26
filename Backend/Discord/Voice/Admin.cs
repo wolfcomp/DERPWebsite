@@ -5,7 +5,8 @@ namespace PDPWebsite.Discord;
 
 public partial class VoiceAdmin
 {
-    [SlashCommand("setup", "Sets up the interaction buttons for voice"), ResponseType(true)]
+    [SlashCommand("setup", "Sets up the interaction buttons for voice")]
+    [ResponseType(true)]
     public async Task Setup()
     {
         var embed = new EmbedBuilder()
@@ -23,7 +24,8 @@ public partial class VoiceAdmin
         await _arg.DeleteOriginalResponseAsync();
     }
 
-    [SlashCommand("current", "Shows current temp voices in memory"), ResponseType(true)]
+    [SlashCommand("current", "Shows current temp voices in memory")]
+    [ResponseType(true)]
     public async Task Current()
     {
         var sb = new StringBuilder();

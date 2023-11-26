@@ -1,10 +1,10 @@
-﻿using Discord.WebSocket;
+﻿using System.Text.RegularExpressions;
 using Discord;
-using System.Text.RegularExpressions;
+using Discord.WebSocket;
 
 namespace PDPWebsite.Services;
 
-static partial class DiscordExtensions
+internal static partial class DiscordExtensions
 {
     public static Regex CapitalLetters = CapitalLettersGenerator();
 
@@ -22,9 +22,7 @@ static partial class DiscordExtensions
                 await messageAttachment.DownloadAsync(stream);
                 var path = Path.Combine("victoryposes", name);
                 if (messageAttachment.IsSpoiler())
-                {
                     path = Path.Combine("victoryposes", "spoilers", name);
-                }
                 path = Path.Combine(Directory.GetCurrentDirectory(), path);
                 var dir = Path.GetDirectoryName(path)!;
                 if (!Directory.Exists(dir))
