@@ -12,6 +12,9 @@ public class Database : DbContext
     public DbSet<Schedule> Schedules { get; set; }
     public DbSet<SignUp> Signups { get; set; }
     public DbSet<AboutInfo> AboutInfos { get; set; }
+    public DbSet<Category> Categories { get; set; }
+    public DbSet<Expansion> Expansions { get; set; }
+    public DbSet<Resource> Resources { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -32,6 +35,35 @@ public class Database : DbContext
         modelBuilder.Entity<AboutInfo>(options =>
         {
             options.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<Category>(options =>
+        {
+            options.HasKey(e => e.Id);
+
+            options.HasMany(e => e.Resources)
+                .WithOne(e => e.Category)
+                .HasForeignKey(e => e.CategoryId);
+        });
+
+        modelBuilder.Entity<Expansion>(options =>
+        {
+            options.HasKey(e => e.Id);
+
+            options.HasMany(e => e.Resources)
+                .WithOne(e => e.Expansion)
+                .HasForeignKey(e => e.ExpansionId);
+        });
+
+        modelBuilder.Entity<Resource>(options =>
+        {
+            options.HasKey(e => e.Id);
+
+            options.Property(e => e.HtmlContent)
+                .HasConversion(new ValueConverter<string, string>(
+                    v => v,
+                    v => v.Replace("\n", "").Replace("\r", "").Replace("\t", "").Replace("  ", "")
+                    ));
         });
     }
 }
