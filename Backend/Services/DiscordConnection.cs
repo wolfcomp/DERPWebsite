@@ -39,6 +39,10 @@ public partial class DiscordConnection : IDisposable
 
     public DiscordConnection(ILogger<DiscordConnection> logger, EnvironmentContainer environmentContainer, RedisClient redisClient, IServiceProvider provider)
     {
+        _logger = logger;
+        _environmentContainer = environmentContainer;
+        _provider = provider;
+        _redisClient = redisClient;
         DiscordClient = new DiscordSocketClient(new DiscordSocketConfig
         {
             GatewayIntents = GatewayIntents.All,
@@ -49,29 +53,25 @@ public partial class DiscordConnection : IDisposable
         });
         DiscordClient.Log += Log;
         DiscordClient.Ready += Ready;
-        DiscordClient.SlashCommandExecuted += SlashCommandExecuted;
-        DiscordClient.UserVoiceStateUpdated += UserVoiceStateUpdated;
-        DiscordClient.ButtonExecuted += MessageInteractionExecuted;
-        DiscordClient.SelectMenuExecuted += MessageInteractionExecuted;
-        DiscordClient.ModalSubmitted += DiscordClientOnModalSubmitted;
+        if (!bool.Parse(_environmentContainer.Get("DISCORD_DISABLE")))
+        {
+            DiscordClient.SlashCommandExecuted += SlashCommandExecuted;
+            DiscordClient.UserVoiceStateUpdated += UserVoiceStateUpdated;
+            DiscordClient.ButtonExecuted += MessageInteractionExecuted;
+            DiscordClient.SelectMenuExecuted += MessageInteractionExecuted;
+            DiscordClient.ModalSubmitted += DiscordClientOnModalSubmitted;
+        }
         DiscordClient.PresenceUpdated += (_, _, _) => Task.CompletedTask;
         DiscordClient.GuildScheduledEventStarted += _ => Task.CompletedTask;
         DiscordClient.InviteCreated += _ => Task.CompletedTask;
-        _logger = logger;
-        _environmentContainer = environmentContainer;
-        _provider = provider;
-        _redisClient = redisClient;
         TempChannels = _redisClient.GetObj<ConcurrentDictionary<ulong, ulong>>("discord_temp_channels") ?? new ConcurrentDictionary<ulong, ulong>();
         Instance = this;
     }
 
     public async Task Start()
     {
-        if (!bool.Parse(_environmentContainer.Get("DISCORD_DISABLE")))
-        {
-            await DiscordClient.LoginAsync(TokenType.Bot, _environmentContainer.Get("DISCORD_TOKEN"));
-            await DiscordClient.StartAsync();
-        }
+        await DiscordClient.LoginAsync(TokenType.Bot, _environmentContainer.Get("DISCORD_TOKEN"));
+        await DiscordClient.StartAsync();
     }
 
     public Task Log(LogMessage arg)
@@ -118,13 +118,17 @@ public partial class DiscordConnection : IDisposable
 
     private async Task Ready()
     {
-#pragma warning disable CS4014
-        SetActivity();
-        CreateCommands();
-#pragma warning restore CS4014
         LogChannel = (SocketTextChannel)await DiscordClient.GetChannelAsync(ulong.Parse(_environmentContainer.Get("DISCORD_LOG_CHANNEL")));
         Guild = DiscordClient.GetGuild(ulong.Parse(_environmentContainer.Get("DISCORD_GUILD")));
         _tempVoiceChannel = (SocketVoiceChannel)await DiscordClient.GetChannelAsync(ulong.Parse(_environmentContainer.Get("DISCORD_TEMP_VOICE")));
+        if (!bool.Parse(_environmentContainer.Get("DISCORD_DISABLE")))
+        {
+#pragma warning disable CS4014
+            SetActivity();
+            CreateCommands();
+            CheckVoice();
+#pragma warning restore CS4014
+        }
         OnReady?.Invoke();
     }
 

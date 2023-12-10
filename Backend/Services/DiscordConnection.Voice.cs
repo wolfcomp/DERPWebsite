@@ -57,4 +57,42 @@ public partial class DiscordConnection
             _logger.LogError(exception, "UserVoiceStateUpdated");
         }
     }
+
+    private async Task CheckVoice()
+    {
+        try
+        {
+            if (Guild != null)
+            {
+                var toRemove = new List<ulong>();
+                foreach (var (channelId, _) in TempChannels)
+                {
+                    var channel = Guild!.GetVoiceChannel(channelId);
+                    if (channel == null)
+                    {
+                        toRemove.Add(channelId);
+                        continue;
+                    }
+                    if (channel.ConnectedUsers.Count != 0)
+                        continue;
+                    toRemove.Add(channelId);
+                    await channel.DeleteAsync();
+                }
+                foreach (var id in toRemove)
+                    TempChannels.Remove(id, out _);
+                _redisClient.SetObj("discord_temp_channels", TempChannels);
+            }
+            await Task.Delay(TimeSpan.FromMinutes(5), _cts.Token);
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+            CheckVoice();
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+        }
+        catch (TaskCanceledException)
+        {
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "CheckVoice");
+        }
+    }
 }
