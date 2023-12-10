@@ -1,19 +1,21 @@
+const storageKey = "pdp-frontend";
+function getStorage(): { [key: string]: any } {
+    let storage = localStorage.getItem(storageKey);
+    if (storage) {
+        return JSON.parse(atob(storage));
+    }
+    return {};
+}
+function saveStorage(storage: { [key: string]: any }) {
+    localStorage.setItem(storageKey, btoa(JSON.stringify(storage)));
+}
 /**
  * Gets a cookie by name
  * @param name The name of the cookie
  * @returns The value and ttl of the cookie
  */
 export function getCookie(name: string): { value: string, ttl: Date } | undefined {
-    let cookieString = document.cookie.split(";");
-    let cookies: { [name: string]: { value: string, ttl: Date } } = {};
-    for (let cookie of cookieString.filter(t => t && !t[0].includes("_expire"))) {
-        let [name, value] = cookie.split("=");
-        let expire = cookieString.find(t => t.includes(name.trim() + "_expire"));
-        if (expire) {
-            let [, expireDate] = expire.split("=");
-            cookies[name.trim()] = { value, ttl: new Date(expireDate) };
-        }
-    }
+    let cookies: { [name: string]: { value: string, ttl: Date } } = getStorage()["cookies"] || {};
     return cookies[name];
 }
 
@@ -26,8 +28,10 @@ export function getCookie(name: string): { value: string, ttl: Date } | undefine
 export function setCookie(name: string, value: string, ttl: number) {
     let date = new Date();
     date.setSeconds(date.getSeconds() + ttl);
-    document.cookie = name.trim() + "=" + value + "; expires=" + date.toUTCString();
-    document.cookie = name.trim() + "_expire=" + date.toUTCString() + "; expires=" + date.toUTCString();
+    let storage = getStorage();
+    storage["cookies"] = storage["cookies"] || {};
+    storage["cookies"][name.trim()] = { value: value, ttl: date };
+    saveStorage(storage);
 }
 
 /**
@@ -35,17 +39,19 @@ export function setCookie(name: string, value: string, ttl: number) {
  * @param name The name of the cookie
  */
 export function deleteCookie(name: string) {
-    document.cookie = name.trim() + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC";
-    document.cookie = name.trim() + "_expire=; expires=Thu, 01 Jan 1970 00:00:00 UTC";
+    let storage = getStorage();
+    if (!storage["cookies"]) {
+        return;
+    }
+    delete storage["cookies"][name];
+    saveStorage(storage);
 }
 
 /**
  * Deletes all cookies
  */
 export function deleteAll() {
-    let cookies = document.cookie.split(";");
-    for (let cookie of cookies) {
-        let name = cookie.split("=")[0];
-        deleteCookie(name);
-    }
+    let storage = getStorage();
+    delete storage["cookies"];
+    saveStorage(storage);
 }

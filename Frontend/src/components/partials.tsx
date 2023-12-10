@@ -24,7 +24,7 @@ export function Header() {
     }
 
     return (
-        <nav className='navbar navbar-expand-lg bg-body-tertiary navbar-shadow-bottom'>
+        <nav className='navbar navbar-expand-lg bg-body-tertiary navbar-shadow-bottom' style={{ zIndex: 1 }}>
             <div className='container-fluid'>
                 <Link to="/" className='navbar-brand'>PDP</Link>
                 <div className="me-2 d-flex align-items-center">

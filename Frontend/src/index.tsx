@@ -4,6 +4,7 @@ import "./index.scss";
 import Loader from "./components/loader";
 import { AuthProvider } from "./components/auth";
 import RequestProvider from "./components/request";
+import "@popperjs/core";
 const App = lazy(() => import("./app"));
 const Slideshow = lazy(() => import("./components/slideshow"));
 const SignalRProvider = lazy(() => import("./components/signalr"));

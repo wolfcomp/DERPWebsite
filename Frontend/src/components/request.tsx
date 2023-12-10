@@ -15,6 +15,12 @@ const RequestContext = createContext<{
     request: async () => { throw new Error("Request provider not initialized") }
 });
 
+export class RequestError extends Error {
+    constructor(public response: Response) {
+        super(response.statusText);
+    }
+}
+
 export function useRequest() {
     return useContext(RequestContext);
 }
@@ -46,7 +52,7 @@ export default function RequestProvider({ children }: { children: React.ReactNod
         try {
             response = await fetch(url, options);
             if (!response.ok) {
-                throw new Error(response.statusText);
+                throw new RequestError(response);
             }
             return response;
         }

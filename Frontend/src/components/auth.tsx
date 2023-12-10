@@ -1,5 +1,5 @@
 import { useContext, createContext, useState, useEffect } from "react";
-import { useRequest } from "./request";
+import { RequestError, useRequest } from "./request";
 import { deleteCookie, getCookie, setCookie } from "./cookie";
 
 export const AuthContext = createContext<{
@@ -33,9 +33,6 @@ export function AuthProvider(props: any) {
         var resp = await request("/api/auth/login?userId=" + uid, {
             method: "GET"
         });
-        if (resp.status !== 200) {
-            throw new Error("Failed to login");
-        }
         setUser(await resp.json());
     }
 
@@ -43,12 +40,7 @@ export function AuthProvider(props: any) {
         var resp = await request("/api/auth/logout?token=" + user.token, {
             method: "DELETE"
         });
-        if (resp.status !== 200) {
-            throw new Error("Failed to logout");
-        }
-        else {
-            setUser(null);
-        }
+        setUser(null);
     }
 
     // async function check() {
@@ -72,16 +64,22 @@ export function AuthProvider(props: any) {
             setUser(null);
             return;
         }
-        var resp = await request("/api/auth/refresh", {
-            method: "POST",
-            headers: {
-                "Authorization": "Bearer " + token,
+        var resp: Response;
+        try {
+            resp = await request("/api/auth/refresh", {
+                method: "POST",
+                headers: {
+                    "Authorization": "Bearer " + token,
+                }
+            });
+            if (resp.status === 200) {
+                setUser(await resp.json());
             }
-        });
-        if (resp.status === 200) {
-            setUser(await resp.json());
+            else {
+                setUser(null);
+            }
         }
-        else {
+        catch (e) {
             setUser(null);
         }
     }

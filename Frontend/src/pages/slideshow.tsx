@@ -52,7 +52,7 @@ export default function Slideshow() {
         );
     }, [expansion, autoShift]);
 
-    return (!autoShift && (<div style={{ position: "absolute", top: 0, left: 0, height: "100vh", width: "100vw", overflow: "hidden", zIndex: -1 }}>
+    return (!autoShift && (<div style={{ position: "absolute", top: 0, left: 0, height: "100vh", width: "100vw", overflow: "hidden" }}>
         <i className="rounded-5 text-center hover-glow bi bi-arrow-left-short" style={{ position: "absolute", top: "calc(50vh - 23px)", left: 14, fontSize: 30, width: 46, height: 46, background: "#333333", cursor: "pointer" }} onClick={() => prevImage()}></i>
         <i className="rounded-5 text-center hover-glow bi bi-arrow-right-short" style={{ position: "absolute", top: "calc(50vh - 23px)", right: 14, fontSize: 30, width: 46, height: 46, background: "#333333", cursor: "pointer" }} onClick={() => nextImage()}></i>
     </div>

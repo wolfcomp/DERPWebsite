@@ -1,5 +1,5 @@
 import { DateTime } from "luxon";
-import { LegacyRef, createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { Toast as BToast } from "bootstrap";
 
 const ToastContext = createContext({

@@ -1,6 +1,5 @@
 import { useState, CSSProperties, useEffect, useRef, lazy } from "react";
 import { Schedule, ScheduleResponse } from "../structs/schedule";
-import "@popperjs/core";
 import { Tooltip } from "bootstrap";
 import { useRequest } from "../components/request";
 import { DateTime } from "luxon";
@@ -11,6 +10,8 @@ const ScheduleEditor = lazy(() => import("../components/scheduleEditor"));
 function getFirstDate() {
     return DateTime.local().setZone("America/Los_Angeles").minus({ days: 1 }).startOf("week").plus({ days: 1 });
 }
+
+const heightConst = 38;
 
 function mobileCheck() {
     let check = false;
@@ -126,16 +127,16 @@ function ScheduleTable(props: { schedules: Schedule[], dates: string[], times: s
     const { schedules, dates, times, style, curTime } = props;
 
     const nowColor = "rgba(255,255,102,0.5)";
-    const offset = curTime.diff(DateTime.fromFormat(dates[0] + "T" + times[0], "dd/MM/yy'T'HH:mm", { zone: "America/Los_Angeles" }), "hours").hours * 42.5 - 8;
-    const leftOffset = Math.floor(offset / (24 * 42.5)) * (100 / 7);
-    const topOffset = offset % (24 * 42.5);
+    const offset = curTime.diff(DateTime.fromFormat(dates[0] + "T" + times[0], "dd/MM/yy'T'HH:mm", { zone: "America/Los_Angeles" }), "hours").hours * heightConst - 8;
+    const leftOffset = Math.floor(offset / (24 * heightConst)) * (100 / 7);
+    const topOffset = offset % (24 * heightConst);
 
     const backgroundColor = "rgba(0,0,0,0.75)";
     const borderColor = "rgba(128,128,128,0.5)";
 
     return (<div style={{ ...style, paddingRight: "calc(var(--bs-gutter-x) * 0.5)", paddingLeft: "calc(var(--bs-gutter-x) * 0.5)", top: 0, transition: "0.3s left ease-in-out", width: "100%" }}>
-        <div className="row" style={{ marginLeft: 45 }}>
-            {dates.map((date, i) => <div className="text-center" style={{ width: "calc(100% / 7)", backgroundColor: backgroundColor, border: borderColor + " solid 0.5px", borderTopLeftRadius: i === 0 ? "1rem" : undefined, borderTopRightRadius: i === 6 ? "1rem" : undefined }} key={style.position + date}>{date}</div>)}
+        <div className="row" style={{ marginLeft: 46.5 }}>
+            {dates.map((date, i) => <div className="text-center" style={{ width: "calc(100% / 7)", backgroundColor: backgroundColor, border: borderColor + " solid 0.5px", borderTopLeftRadius: i === 0 ? "1rem" : undefined, borderTopRightRadius: i === 6 ? "1rem" : undefined }} key={style.position + date}>{DateTime.fromFormat(date, 'dd/MM/yy').toLocaleString({ weekday: "long" }, { locale: "en-GB" })}<br />{date}</div>)}
         </div>
         {times.map((time, i) => <div className="row" style={{ lineHeight: 2.25 }} key={style.position + time}>
             <span className="text-center" style={{ padding: 0, width: 58.56, marginRight: "calc(var(--bs-gutter-x) * 0.5)", backgroundColor: backgroundColor, border: borderColor + " solid 0.5px", borderTopLeftRadius: i === 0 ? ".5rem" : undefined, borderBottomLeftRadius: i === 23 ? ".5rem" : undefined }}>{time}</span>
@@ -147,7 +148,7 @@ function ScheduleTable(props: { schedules: Schedule[], dates: string[], times: s
             <div style={{ position: "relative" }}>
                 {schedules.map((schedule) => <ScheduleCard schedule={schedule} schedules={schedules} key={schedule.id} curTime={curTime} />)}
             </div>
-            {offset > 0 && <div style={{ position: "relative", right: 0, width: `${(100 / 7)}%`, top: topOffset + 29, left: `${leftOffset}%`, border: "7px solid transparent", borderLeft: `7px solid ${nowColor}`, borderRight: `7px solid ${nowColor}` }}><div style={{ height: 2, backgroundColor: nowColor }}></div></div>}
+            {offset > 0 && <div style={{ position: "relative", right: 0, width: `${(100 / 7)}%`, top: topOffset + 50, left: `${leftOffset}%`, border: "7px solid transparent", borderLeft: `7px solid ${nowColor}`, borderRight: `7px solid ${nowColor}` }}><div style={{ height: 2, backgroundColor: nowColor }}></div></div>}
         </div>
     </div>);
 }
@@ -158,7 +159,7 @@ function SchedulePhone(props: { schedules: Schedule[], curTime: DateTime }) {
     const times = getTimes();
 
     const nowColor = "rgba(255,255,102,0.5)";
-    const offset = curTime.diff(DateTime.fromFormat(dates[0] + "T" + times[0], "dd/MM/yy'T'HH:mm", { zone: "America/Los_Angeles" }), "hours").hours * 42.5 - 8;
+    const offset = curTime.diff(DateTime.fromFormat(dates[0] + "T" + times[0], "dd/MM/yy'T'HH:mm", { zone: "America/Los_Angeles" }), "hours").hours * heightConst - 8;
 
     const backgroundColor = "rgba(0,0,0,0.75)";
     const borderColor = "rgba(128,128,128,0.5)";
@@ -235,8 +236,9 @@ function getScheduleOffset(schedule: Schedule, schedules: Schedule[]) {
 
 function ScheduleCardMobile(props: { schedule: Schedule, schedules: Schedule[], curTime: DateTime }) {
     const { schedule, schedules, curTime } = props;
-    const height = 42.5 * schedule.getEnd().diff(schedule.getStart(), "hours").hours;
+    const height = heightConst * schedule.getEnd().diff(schedule.getStart(), "hours").hours;
     const divRef = useRef<HTMLDivElement>(null);
+    const [title, setTitle] = useState<string>("");
 
     const { width, offset } = getScheduleOffset(schedule, schedules);
 
@@ -246,24 +248,30 @@ function ScheduleCardMobile(props: { schedule: Schedule, schedules: Schedule[], 
 
     const offsetTop = (time: DateTime) => {
         var hours = time.diff(firstDate, "hours").hours;
-        return 42.5 * hours;
+        return heightConst * hours;
     }
 
-    const title = `${schedule.name}
-    <br />
-    [ <span class="fs-sub">${schedule.hostName}</span> ]
-    <br />
-    <br />
-    Start: ${schedule.getStart().toLocal().toLocaleString(DateTime.DATETIME_MED)}
-    <br />
-    End: ${schedule.getEnd().toLocal().toLocaleString(DateTime.DATETIME_MED)}`;
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setTitle(`${schedule.name}
+            <br />
+            [ <span class="fs-sub">${schedule.hostName}</span> ]
+            <br />
+            ${schedule.getStart().toRelative()}
+            <br />
+            Start: ${schedule.getStart().toLocal().toLocaleString(DateTime.DATETIME_MED)}
+            <br />
+            End: ${schedule.getEnd().toLocal().toLocaleString(DateTime.DATETIME_MED)}`);
+        }, 500);
+        return () => clearInterval(interval);
+    }, [setTitle, schedule]);
 
     useEffect(() => {
         if (!divRef.current)
             return;
         var tooltip = new Tooltip(divRef.current, { container: "body", title: title, placement: "auto", html: true });
         return () => tooltip.dispose();
-    }, [divRef, schedule]);
+    }, [divRef, schedule, title]);
 
     const wid = (100 * width);
     const left = wid * offset;
@@ -272,7 +280,7 @@ function ScheduleCardMobile(props: { schedule: Schedule, schedules: Schedule[], 
     return (
         <div style={{ position: "absolute", top: offsetTop(schedule.getStart()), width: `${wid}%`, left: `${left}%`, overflow: "hidden", cursor: "help" }} ref={divRef}>
             <div style={{ backgroundColor: backgroundColor, border: "rgba(128,128,128,0.75) solid 1px", borderRadius: "1rem", height: height, width: "100%", transition: "backgroundColor 0.2s linear" }} className="d-flex flex-wrap align-content-center justify-content-center">
-                <p className="text-center text-break" style={{ margin: 0, }}>{schedule.name}<br />[ <span className="fs-sub">{schedule.hostName.split(' ')[0]}</span> ]</p>
+                <p className="text-center text-break" style={{ margin: 0, lineHeight: 1.2 }}>{schedule.name}<br />[ <span className="fs-sub">{schedule.hostName.split(' ')[0]}</span> ]</p>
             </div>
         </div>
     );
@@ -280,7 +288,7 @@ function ScheduleCardMobile(props: { schedule: Schedule, schedules: Schedule[], 
 
 function ScheduleCard(props: { schedule: Schedule, schedules: Schedule[], curTime: DateTime }) {
     const { schedule, schedules, curTime } = props;
-    const height = 42.5 * schedule.getEnd().diff(schedule.getStart(), "hours").hours;
+    const height = heightConst * schedule.getEnd().diff(schedule.getStart(), "hours").hours;
     const divRef = useRef<HTMLDivElement>(null);
 
     const { width, offset } = getScheduleOffset(schedule, schedules);
@@ -294,13 +302,15 @@ function ScheduleCard(props: { schedule: Schedule, schedules: Schedule[], curTim
     };
     const offsetTop = (time: DateTime) => {
         var hours = time.diff(time.startOf("day"), "hours").hours;
-        return 29 + 42.5 * hours;
+        return 50 + heightConst * hours;
     }
 
     const title = `${schedule.name}
     <br />
     [ <span class="fs-sub">${schedule.hostName}</span> ]
     <br />
+    <br />
+    <span class="fs-sub" id="stamp_${schedule.id}">Uncalculated</span>
     <br />
     Start: ${schedule.getStart().toLocal().toLocaleString(DateTime.DATETIME_MED)}
     <br />
@@ -310,8 +320,45 @@ function ScheduleCard(props: { schedule: Schedule, schedules: Schedule[], curTim
         if (!divRef.current)
             return;
         var tooltip = new Tooltip(divRef.current, { container: "body", title: title, placement: "top", html: true });
-        return () => tooltip.dispose();
+        return () => {
+            tooltip.dispose();
+        };
     }, [divRef]);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            var node = document.querySelector("#stamp_" + schedule.id);
+            if (node) {
+                var now = DateTime.utc();
+                var { days, hours, minutes, seconds } = schedule.getStart().diff(now, ["days", "minutes", "hours", "seconds"]);
+                var str = "";
+                if (days > 0 || hours > 0 || minutes > 0 || seconds > 0) {
+                    if (days > 0)
+                        str += `${days} day${days > 1 ? "s" : ""}`;
+                    if (hours > 0)
+                        str += `${str.length > 0 ? ", " : ""}${hours} hr${hours > 1 ? "s" : ""}`;
+                    if (minutes > 0)
+                        str += `${str.length > 0 ? ", " : ""}${minutes} min${minutes > 1 ? "s" : ""}`;
+                    if (seconds > 0)
+                        str += `${str.length > 0 ? ", and " : ""}${Math.floor(seconds)} sec${Math.floor(seconds) > 1 ? "s" : ""}`;
+                    str = `In ${str}`;
+                }
+                else {
+                    if (days < 0)
+                        str += `${Math.abs(days)} day${days < -1 ? "s" : ""}`;
+                    if (hours < 0)
+                        str += `${str.length > 0 ? ", " : ""}${Math.abs(hours)} hr${hours < -1 ? "s" : ""}`;
+                    if (minutes < 0)
+                        str += `${str.length > 0 ? ", " : ""}${Math.abs(minutes)} min${minutes < -1 ? "s" : ""}`;
+                    if (seconds < 0)
+                        str += `${str.length > 0 ? ", and " : ""}${Math.floor(Math.abs(seconds))} sec${Math.floor(-seconds) > 1 ? "s" : ""}`;
+                    str = `${str} ago`;
+                }
+                node.innerHTML = str;
+            }
+        }, 500);
+        return () => clearInterval(interval);
+    }, [schedule]);
 
     const left = (100 / 7) * (width * offset + offsetLeft(schedule.getStart()));
 
@@ -320,7 +367,7 @@ function ScheduleCard(props: { schedule: Schedule, schedules: Schedule[], curTim
     return (
         <div style={{ position: "absolute", top: offsetTop(schedule.getStart()), left: `${left}%`, maxWidth: "calc(100% / 7)", width: `calc(calc(100% / 7) * ${width})`, overflow: "hidden", cursor: "help" }} ref={divRef}>
             <div style={{ backgroundColor: backgroundColor, border: "rgba(128,128,128,0.75) solid 1px", borderRadius: "1rem", height: height, width: "100%", transition: "backgroundColor 0.2s linear" }} className="d-flex flex-wrap align-content-center justify-content-center">
-                <p className="text-center text-break" style={{ margin: 0, }}>{schedule.name}<br />[ <span className="fs-sub">{schedule.hostName.split(' ')[0]}</span> ]</p>
+                <p className="text-center text-break" style={{ margin: 0, lineHeight: 1.2 }}>{schedule.name}<br />[ <span className="fs-sub">{schedule.hostName.split(' ')[0]}</span> ]</p>
             </div>
         </div>
     );
