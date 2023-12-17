@@ -15,6 +15,7 @@ export default function Slideshow() {
         });
         localStorage.removeItem("unblured");
         return () => {
+            setAutoShift(true);
             setBlured(prevBlur);
             setExpansion("slideshow_main");
             setNavContent(null);

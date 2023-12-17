@@ -56,13 +56,14 @@ export default function Slideshow(props: { children: React.ReactNode }) {
     const [navContent, setNavContent] = useState<React.ReactNode>(null);
     const [expansion, setExpansion] = useState<string>("slideshow_main");
     const [imagePaths, setImagePaths] = useState<{ expansion: string, path: string }[]>([]);
+    const [imageRoulette, setImageRoulette] = useState<string[]>([]);
     const [currentImage, setCurrentImage] = useState<string>("");
     const [nextImage, setNextImage] = useState<string>("");
     const [lastUpdate, setLastUpdate] = useState<{ time: Date, delta: number }>({ time: new Date(), delta: 0 });
     const [autoShift, setAutoShift] = useState<boolean>(true);
-    const [state, setState] = useState<"shifting" | "shifted" | "shifted-prepared">("shifted");
+    const [state, setState] = useState<"shifting" | "shifted" | "shifted-prepared" | "shifted-end">("shifted");
     const [blured, setBlured] = useState<"blured" | "default" | "unblured">("default");
-    const loadDelays = [300, 59700];
+    const loadDelays = [300, 59400, 300];
 
     useEffect(() => {
         getAllImages().then(
@@ -72,22 +73,27 @@ export default function Slideshow(props: { children: React.ReactNode }) {
                 setCurrentImage(images[0].path);
                 setNextImage(images[1].path);
                 setLastUpdate({ time: new Date(), delta: 0 });
+                getImageRouletteCurrent(data);
             },
             (err) => console.error(err)
         );
     }, [setImagePaths]);
 
     useEffect(() => {
-        if (state === "shifting" && ((autoShift && lastUpdate.delta > loadDelays[0]) || (!autoShift && lastUpdate.delta > 300))) {
+        if (state === "shifting" && (lastUpdate.delta > loadDelays[0])) {
             setState("shifted");
             setCurrentImage(nextImage);
             setLastUpdate({ time: new Date(), delta: 0 });
         }
-        else if (state === "shifted" && lastUpdate.delta > loadDelays[1] && !autoShift) {
+        else if (state === "shifted-end" && lastUpdate.delta > loadDelays[1] && autoShift) {
             changeImage(false);
         }
         else if (state === "shifted-prepared") {
             setState("shifting");
+            setLastUpdate({ time: new Date(), delta: 0 });
+        }
+        else if (state === "shifted" && lastUpdate.delta > loadDelays[2]) {
+            setState("shifted-end");
             setLastUpdate({ time: new Date(), delta: 0 });
         }
         const interval = setInterval(() => {
@@ -97,11 +103,14 @@ export default function Slideshow(props: { children: React.ReactNode }) {
     }, [lastUpdate]);
 
     useEffect(() => {
-        console.log(state);
-        if (state === "shifted") {
+        if (state === "shifted-end") {
             changeImage(false);
         }
     }, [expansion]);
+
+    useEffect(() => {
+        getImageRouletteCurrent(imagePaths);
+    }, [currentImage]);
 
     function changeImage(prev: boolean) {
         var images = imagePaths.filter((t) => t.expansion === expansion).map((t) => t.path);
@@ -110,19 +119,51 @@ export default function Slideshow(props: { children: React.ReactNode }) {
             :
             images.indexOf(currentImage) - 1 === -1 ? images[images.length - 1] : images[images.indexOf(currentImage) - 1];
         loadImage(nextImage, () => {
-            setNextImage(nextImage);
-            setState("shifted-prepared");
-            setLastUpdate({ time: new Date(), delta: 0 });
+            setImage(nextImage);
         });
+    }
+
+    function setImage(path: string) {
+        setNextImage(path);
+        setState("shifted-prepared");
+        setLastUpdate({ time: new Date(), delta: 0 });
+    }
+
+    function getImageRouletteCurrent(imagePaths: { expansion: string, path: string }[]) {
+        var images = imagePaths.filter((t) => t.expansion === expansion).map((t) => t.path);
+        var count = 9;
+        var currentIndex = images.indexOf(currentImage) - Math.floor(count / 2);
+        if (currentIndex < 0) currentIndex = images.length + currentIndex;
+        var retImages = [];
+        for (var i = 0; i < count; i++) {
+            retImages.push(images[currentIndex]);
+            currentIndex++;
+            if (currentIndex >= images.length) currentIndex = 0;
+        }
+        setImageRoulette(retImages);
+    }
+
+    function isActive(path: string) {
+        if (state === "shifted-end")
+            return path === currentImage;
+        return path === nextImage;
     }
 
     return (
         <ImagesContext.Provider value={{ setExpansion, expansion, setBlured, setAutoShift, setNavContent, navContent, autoShift, nextImage: () => changeImage(false), prevImage: () => changeImage(true) }}>
             {props.children}
             <div className={"slideshow-container" + (blured === "blured" ? " blur" : "") + (blured === "unblured" ? " unblur" : "")}>
-                {currentImage && <div className="slideshow-image" style={{ backgroundImage: `url("${urlPath}${currentImage}")` }} />}
-                {nextImage && <div className={"slideshow-image" + (state === "shifting" ? "" : " hidden")} style={{ backgroundImage: `url("${urlPath}${nextImage}")` }} />}
+                {currentImage && <div className={"slideshow-image" + (state === "shifting" ? " hidden" : "")} style={{ backgroundImage: `url(${urlPath}${currentImage})` }} />}
+                {nextImage && <div className={"slideshow-image" + ((state === "shifting" || state === "shifted") ? "" : " hidden")} style={{ backgroundImage: `url(${urlPath}${nextImage})` }} />}
             </div>
+            {!autoShift && <div className="slideshow-nav">
+                <div className="slideshow-nav-content">
+                    {imageRoulette.map((t, i) => <img key={i} className={"slideshow-nav-image" + (isActive(t) ? " active" : "")} src={`${urlPath}${t}`} onClick={(e) => {
+                        e.preventDefault();
+                        setImage(t);
+                    }} />)}
+                </div>
+            </div>}
         </ImagesContext.Provider>
     )
 }
