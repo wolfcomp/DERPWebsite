@@ -1,20 +1,21 @@
+import { DateTime } from "luxon";
+import { useEffect, useState } from "react";
+
+const str = "JTNDZGl2JTIwY2xhc3NOYW1lJTNEJTIycm93JTIyJTNFJTNDaDElM0VVd1UlMjB3YXRzJTIwZGlzJTNDJTJGaDElM0UlM0MlMkZkaXYlM0UlM0NkaXYlMjBjbGFzc05hbWUlM0QlMjJyb3clMjIlM0UlM0NwJTNFSGFpaWlpISUyMEluJTIwMjAyMiUyMER5bmFtaXMlMjB3YXMlMjBvcGVuZWQlMjBvbiUyME5BJTIwc2V3dmV3cyUyMG9mJTIwRkZYSVYlMkMlMjBhbmQlMjBkdWUlMjB0byUyMHRoaXMlMjBEYXRhJTIwQ2VudGV3JTIwYmVpbmclMjBuZXdldyUyMHRoZXdlJTIwaGF6JTIwYmVlbiUyMGNvbnRpbnVlZCUyMGlzc3VlcyUyMHdpdGglMjBxdWV1ZSUyMHRpbWVzJTIwYW5kJTIwZGElMjBuZWVkJTIwdG8lMjBEQyUyMHR3YXZldyUyMHRvJTIwd3VuJTIwZGElMjBtYWpvd2l0eSUyMG9mJTIwY29udGVudCUyMGluJTIwYSUyMHRpbWV3eSUyMG1hbm5ldy4lMjBXaXRob3V0JTIwYW4lMjBhY3RpdmUlMjBGQyUyMHd1bm5pbmclMjBhJTIwdmF3aWV0eSUyMG9mJTIwY29udGVudCUyQyUyMG93JTIwZm93JTIwU3B3b3V0cyUyMHR3eWluZyUyMHRvJTIwY2F0Y2glMjB1cCUyMG9uJTIwZGElMjBzdG93eSUyQyUyMGl0JTIwY2FuJTIwYmUlMjBhJTIwZGF1bnRpbmclMjB0YXNrJTIwZ2V0dGluZyUyMGludG8lMjBkYSUyMHN0d2lkZSUyMG9mJTIwZGElMjBnYW1lJTIwd2UlMjBhd3clMjBzaGF3ZSUyMGFuZCUyMHdvdmUuJTNDYnIlMjAlMkYlM0UlM0NiciUyMCUyRiUzRU91dyUyMGhvcGUlMjB3aXRoJTIwZGElMjBQaG9lbml4JTIwRG93biUyMFB3b2plY3QlMjAob3clMjBQRFApJTIwaXMlMjB0byUyMGluamVjdCUyMHNvbWUlMjB3aWZlJTIwaW50byUyMG91dyUyMER1dHklMjBGaW5kZXclMjBhbmQlMjBQYXd0eSUyMEZpbmRldyUyMGVudHdpZXMlMjBvbiUyMG91dyUyMERDLiUyMFdlJTIwd2lzaCUyMHRvJTIwaGV3cCUyMGhhenRlbiUyMGElMjB3ZXZpdmF3JTIwb2YlMjBvdXclMjBjb250ZW50JTJDJTIwYW5kJTIwd2Vtb3ZlJTIwZGElMjBuZWVkJTIwdG8lMjBob3AlMjBiYWNrJTIwdG8lMjBBZXRoZXclMkMlMjBDd3lzdGF3JTJDJTIwb3clMjBQd2ltYXclMjBhbmQlMjBzZXBhd2F0ZSUyMHVzJTIwZndvbSUyMG91dyUyMER5bmFtaXMlMjBmd2llbmRzJTIwYW5kJTIwZmFtaXd5LiUyMEFzJTIwc3VjaCUyQyUyMHdlJUUyJTgwJTk5dmUlMjBjd2VhdGVkJTIwb3V3JTIwY29tbXVuaXR5JTIwc2V3dmV3JTIwd2l0aCUyMGRhJTIwaW50ZXdlc3QlMjBvZiUyMHd1bm5pbmclMjB3ZWd1d2F3d3klMjBzY2hlZHV3ZWQlMjBjb250ZW50JTIwb24lMjBhJTIwdm93dW50ZWV3JTIwYmFzaXMlMjB0byUyMGhld3AlMjBwd29tb3RlJTIwYSUyMGhlYXd0aHklMjBEdXR5JTIwYW5kJTIwUGF3dHklMjBGaW5kZXcuJTIwSGV3ZSUyMHV1JUUyJTgwJTk5d3clMjBmaW5kJTIwYSUyMGhvbWUlMjBmb3clMjBjb250ZW50JTIwd2hldGhldyUyMHV1JUUyJTgwJTk5d2UlMjBhJTIwU3B3b3V0JTJDJTIwV2V0dXduZXclMkMlMjBvdyUyMGElMjBWZXRld2FuJTIwZndvbSUyMGRhJTIwYmVmb3dlJTIwdGltZXMuJTNDYnIlMjAlMkYlM0UlM0NiciUyMCUyRiUzRUF0JTIwUERQJTIwd2UlMjBwd29tb3RlJTIwYW4lMjBvcGVuJTIwYW5kJTIwd2V3Y29taW5nJTIwY29tbXVuaXR5JTIwbnUlMjBtYXR0ZXclMjB3aGF0JTIwY29udGVudCUyMHV1JTIwbWF5JTIwYmUlMjBpbnRld2VzdGVkJTIwaW4uJTIwV2l0aCUyMGFuJTIwYW1hemluZyUyMHRlYW0lMjBvZiUyMGFkbWlucyUyQyUyMG1vZHMlMjBhbmQlMjB2b3d1bnRlZXclMjBob3N0cyUyMHRvJTIwaGV3cCUyMHVzJTIwd3VuJTIwd2Vla3d5JTIwY29udGVudCUyMGluJTIwZGElMjBmb3dtJTIwb2YlMjBwd2FubmVkJTIwQXd3aWFuY2UlMjBXYWlkcyUyQyUyME5vd21hdyUyMFdhaWRzJTJDJTIwTW91bnQlMjBhbmQlMjBHd2Ftb3V3JTIwRmF3bXMlMkMlMjBhbmQlMjBtb3dlJTJDJTIwd2UlMjBzdHdpdmUlMjB0byUyMGN3ZWF0ZSUyMGElMjBzYWZlJTIwYW5kJTIwYWN0aXZlJTIwY29udGVudCUyMGNvbW11bml0eS4lMjBXZSUyMHdpc2glMjB0byUyMHdld2NvbWUlMjB1dSUyMGF3dyUyMGludG8lMjBvdXclMjB3b3Zld3klMjBjb21tdW5pdHklMjBoZXdlJTIwYXQlMjBQRFAlMkMlMjBhbmQlMjB3b29rJTIwZm93d2F3ZCUyMHRvJTIwd3VubmluZyUyMGNvbnRlbnQlMjB3aXRoJTIwdXUuJTIwJTNDJTdCJTVFdiU1RSU3RCUzRSUzQyUyRnAlM0UlM0MlMkZkaXYlM0U=";
+
 export default function Home() {
+    const [html, setHtml] = useState('<div className="row"><h1>Home</h1></div><div className="row"><p>In 2022 Dynamis was opened on NA servers of FFXIV, and due to this Data Center being newer there have been continued issues with queue times and the need to DC travel to run the majority of content in a timely manner. Without an active FC running a variety of content, or for Sprouts trying to catch up on the story, it can be a daunting task getting into the stride of the game we all share and love.<br /><br />Our hope with the Phoenix Down Project (or PDP) is to inject some life into our Duty Finder and Party Finder entries on our DC. We wish to help hasten a revival of our content, and remove the need to hop back to Aether, Crystal, or Primal and separate us from our Dynamis friends and family. As such, we’ve created our community server with the interest of running regularly scheduled content on a volunteer basis to help promote a healthy Duty and Party Finder. Here you’ll find a home for content whether you’re a Sprout, Returner, or a Veteran from the before times.<br /><br />At PDP we promote an open and welcoming community no matter what content you may be interested in. With an amazing team of admins, mods and volunteer hosts to help us run weekly content in the form of planned Alliance Raids, Normal Raids, Mount and Glamour Farms, and more, we strive to create a safe and active content community. We wish to welcome you all into our lovely community here at PDP, and look forward to running content with you.</p></div>');
+
+    useEffect(() => {
+        const date = DateTime.local();
+
+        if (date.month === 4 && date.day === 1) {
+            setHtml(decodeURIComponent(atob(str)));
+        }
+    }, []);
+
+
     return (
-        <div className="container mt-4">
-            <div className="row">
-                <h1>Home</h1>
-            </div>
-            <div className="row">
-                <p>
-                    In 2022 Dynamis was opened on NA servers of FFXIV, and due to this Data Center being newer there have been continued issues with queue times and the need to DC travel to run the majority of content in a timely manner. Without an active FC running a variety of content, or for Sprouts trying to catch up on the story, it can be a daunting task getting into the stride of the game we all share and love.
-                    <br />
-                    <br />
-                    Our hope with the Phoenix Down Project (or PDP) is to inject some life into our Duty Finder and Party Finder entries on our DC. We wish to help hasten a revival of our content, and remove the need to hop back to Aether, Crystal, or Primal and separate us from our Dynamis friends and family. As such, we’ve created our community server with the interest of running regularly scheduled content on a volunteer basis to help promote a healthy Duty and Party Finder. Here you’ll find a home for content whether you’re a Sprout, Returner, or a Veteran from the before times.
-                    <br />
-                    <br />
-                    At PDP we promote an open and welcoming community no matter what content you may be interested in. With an amazing team of admins, mods and volunteer hosts to help us run weekly content in the form of planned Alliance Raids, Normal Raids, Mount and Glamour Farms, and more, we strive to create a safe and active content community. We wish to welcome you all into our lovely community here at PDP, and look forward to running content with you.
-                </p>
-            </div>
-        </div>
+        <div className="container mt-4" dangerouslySetInnerHTML={{ __html: html }}></div>
     );
 }
