@@ -122,8 +122,8 @@ function EditorSaveModal(props: { pageName?: string, markdown: string, category?
     const [pageNameInternal, setPageNameInternal] = useState<string>(pageName || "");
     const [categoryInternal, setCategoryInternal] = useState<string>(category || "");
     const [expansionInternal, setExpansionInternal] = useState<string>(expansion || "");
-    const [categories, setCategories] = useState<string[]>([]);
-    const [expansions, setExpansions] = useState<string[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [expansions, setExpansions] = useState<Expansion[]>([]);
     const [validation, setValidation] = useState<Record<string, string>>({});
     const allowedTitleChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_";
     const charLimit = 32;
@@ -150,8 +150,8 @@ function EditorSaveModal(props: { pageName?: string, markdown: string, category?
         if (!categoryInternal) {
             validationInternal["category"] = "Category cannot be empty";
         }
-        if (!categories.includes(categoryInternal)) {
-            validationInternal["category"] = `Category '${categoryInternal}' does not exist`;
+        if (!categories.map(t => t.id).includes(categoryInternal)) {
+            validationInternal["category"] = `Selected category does not exist`;
         }
         if (validationInternal["category"] === undefined) {
             validationInternal["category"] = "";
@@ -159,8 +159,8 @@ function EditorSaveModal(props: { pageName?: string, markdown: string, category?
         if (!expansionInternal) {
             validationInternal["expansion"] = "Expansion cannot be empty";
         }
-        if (!expansions.includes(expansionInternal)) {
-            validationInternal["expansion"] = `Expansion '${expansionInternal}' does not exist`;
+        if (!expansions.map(t => t.id).includes(expansionInternal)) {
+            validationInternal["expansion"] = `Selected expansion does not exist`;
         }
         if (validationInternal["expansion"] === undefined) {
             validationInternal["expansion"] = "";
@@ -176,6 +176,21 @@ function EditorSaveModal(props: { pageName?: string, markdown: string, category?
     function save() {
         try {
             validate();
+            const html = parse(markdown);
+            const clean = DOMPurify.sanitize(html);
+            request("/api/resources", {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    categoryId: categoryInternal,
+                    expansionId: expansionInternal,
+                    htmlContent: clean,
+                    markdownContent: markdown,
+                    pageName: pageNameInternal
+                })
+            });
         }
         catch (e) {
             if (e instanceof Error) {
@@ -190,7 +205,7 @@ function EditorSaveModal(props: { pageName?: string, markdown: string, category?
         if (!res.ok)
             return;
         const categories = await res.json() as Category[];
-        setCategories(categories.map((category) => category.name));
+        setCategories(categories);
     }
 
     useEffect(() => {
@@ -202,7 +217,7 @@ function EditorSaveModal(props: { pageName?: string, markdown: string, category?
         if (!res.ok)
             return;
         const expansions = await res.json() as Expansion[];
-        setExpansions(expansions.map((expansion) => expansion.name));
+        setExpansions(expansions);
     }
 
     useEffect(() => {
@@ -237,7 +252,7 @@ function EditorSaveModal(props: { pageName?: string, markdown: string, category?
                         }}>
                             <option selected={categoryInternal === ""}>Select a category</option>
                             {categories.map((category) => {
-                                return <option key={category} value={category} selected={category === categoryInternal}>{category}</option>
+                                return <option key={category.id} value={category.id} selected={category.id === categoryInternal}>{category.name}</option>
                             })}
                         </select>
                         {validation["category"] && <div className="invalid-feedback">{validation["category"]}</div>}
@@ -249,7 +264,7 @@ function EditorSaveModal(props: { pageName?: string, markdown: string, category?
                         }}>
                             <option selected={expansionInternal === ""}>Select an expansion</option>
                             {expansions.map((expansion) => {
-                                return <option key={expansion} value={expansion} selected={expansion === expansionInternal}>{expansion}</option>
+                                return <option key={expansion.id} value={expansion.id} selected={expansion.id === expansionInternal}>{expansion.name}</option>
                             })}
                         </select>
                         {validation["expansion"] && <div className="invalid-feedback">{validation["expansion"]}</div>}

@@ -15,6 +15,7 @@ public class Database : DbContext
     public DbSet<Category> Categories { get; set; }
     public DbSet<Expansion> Expansions { get; set; }
     public DbSet<Resource> Resources { get; set; }
+    public DbSet<ResourceFile> ResourceFiles { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -64,6 +65,15 @@ public class Database : DbContext
                     v => v,
                     v => v.Replace("\n", "").Replace("\r", "").Replace("\t", "").Replace("  ", "")
                     ));
+        });
+
+        modelBuilder.Entity<ResourceFile>(options =>
+        {
+            options.HasKey(e => e.Id);
+
+            options.HasOne(e => e.Resource)
+                .WithMany(e => e.Files)
+                .HasForeignKey(e => e.ResourceId);
         });
     }
 }
