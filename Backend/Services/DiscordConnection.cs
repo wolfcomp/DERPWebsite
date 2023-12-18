@@ -76,10 +76,26 @@ public partial class DiscordConnection : IDisposable
 
     public Task Log(LogMessage arg)
     {
-        if (arg.Exception is WebSocketException or WebSocketClosedException or GatewayReconnectException || arg.Exception?.InnerException is WebSocketException or WebSocketClosedException or GatewayReconnectException)
+        var log = arg;
+        if (log.Exception is WebSocketException or WebSocketClosedException or GatewayReconnectException || log.Exception?.InnerException is WebSocketException or WebSocketClosedException or GatewayReconnectException)
             return Task.CompletedTask;
 
-        _logger.Log(arg.Severity switch
+        if (log.Severity == LogSeverity.Warning)
+        {
+            var args = log.Message.Split(' ');
+            if (args[0] == "Unknown")
+            {
+                switch (args[1])
+                {
+                    case "Channel":
+                        var channelStr = args[3].Split('=');
+                        log = new LogMessage(LogSeverity.Warning, log.Source, $"{args[0]} {args[1]} {args[2]} {channelStr[0]} <#{channelStr[1][..^2]}>).");
+                        break;
+                }
+            }
+        }
+
+        _logger.Log(log.Severity switch
         {
             LogSeverity.Critical => MSLogLevel.Critical,
             LogSeverity.Error => MSLogLevel.Error,
@@ -88,7 +104,7 @@ public partial class DiscordConnection : IDisposable
             LogSeverity.Verbose => MSLogLevel.Trace,
             LogSeverity.Debug => MSLogLevel.Debug,
             _ => MSLogLevel.Information
-        }, arg.Exception, arg.Message);
+        }, log.Exception, log.Message);
         return Task.CompletedTask;
     }
 
