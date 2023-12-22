@@ -5,6 +5,15 @@ import { Collapse } from 'bootstrap';
 import { createRef, useEffect, useState } from 'react';
 import { useSlideshow } from './slideshow';
 
+const links = [
+    { name: "Home", path: "/", auth: false },
+    { name: "About", path: "/about", auth: false },
+    { name: "Schedule", path: "/schedule", auth: false },
+    { name: "Resources", path: "/resources", auth: false },
+    { name: "Slideshow", path: "/slideshow", auth: false },
+    { name: "Files", path: "/files", auth: true }
+]
+
 export function Header() {
     const auth = useAuth();
     const location = useLocation();
@@ -37,7 +46,10 @@ export function Header() {
                 </div>
                 <div className='collapse navbar-collapse justify-content-between' ref={collapseRef}>
                     <ul className='navbar-nav'>
-                        <li className='nav-item'>
+                        {links.filter(link => !link.auth || auth.user).map((link, i) => <li key={`nav-header-${i}`} className='nav-item'>
+                            <Link to={link.path} className={`nav-link ${link.path === location.pathname ? "active" : ""}`}>{link.name}</Link>
+                        </li>)}
+                        {/* <li className='nav-item'>
                             <Link to="/" className='nav-link'>Home</Link>
                         </li>
                         <li className='nav-item'>
@@ -51,7 +63,7 @@ export function Header() {
                         </li>
                         {auth.user && <li className='nav-item'>
                             <Link to="https://pdp.wildwolf.dev/files" className='nav-link'>Files</Link>
-                        </li>}
+                        </li>} */}
                     </ul>
                     {navContent}
                     <ul className='navbar-nav'>

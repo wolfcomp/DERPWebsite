@@ -1,0 +1,17 @@
+.editor-extra {
+    max-height: 1000px;
+    opacity: 1;
+    position: relative;
+    transition:
+        0.25s ease-in-out max-height,
+        0.25s ease-in-out opacity;
+    &.hidden {
+        z-index: -1;
+        max-height: 0;
+        opacity: 0;
+    }
+
+    .bg-body {
+        --bs-bg-opacity: 0.85;
+    }
+}
