@@ -1,4 +1,7 @@
 ﻿using System.Diagnostics;
+using System.Reflection;
+using PDPWebsite.Models;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace PDPWebsite.Controllers;
 
@@ -19,45 +22,77 @@ public class ResourcesController : ControllerBase
 
     [HttpGet]
     [Route("")]
+    [SwaggerOperation("Gets all resources")]
+    [SwaggerResponse(StatusCodes.Status200OK, "All resources", typeof(IEnumerable<Resource>))]
+    [SwaggerResponse(StatusCodes.Status500InternalServerError, "Internal server error", typeof(string))]
     public IActionResult GetResources()
     {
-        return Ok(_database.Resources.Include(resource => resource.Category).Include(resource => resource.Expansion).Select(t => new { t.Id, Category = new { t.Category.Id, t.Category.Name, t.Category.Description, t.Category.IconUrl }, Expansion = new { t.Expansion.Id, t.Expansion.Name, t.Expansion.Description, t.Expansion.IconUrl }, t.PageName }));
+        return Ok(_database.Resources.Include(resource => resource.Category).Include(resource => resource.Expansion).Select(resource => new
+        {
+            resource.Id,
+            Category = new { resource.Category.Id, resource.Category.Name, resource.Category.Description, resource.Category.IconUrl },
+            Expansion = new { resource.Expansion.Id, resource.Expansion.Name, resource.Expansion.Description, resource.Expansion.IconUrl },
+            resource.PageName,
+            resource.Published
+        }));
     }
 
-    [HttpPut]
+    [HttpPost]
     [Route("")]
     [ServiceFilter(typeof(AuthFilter))]
-    public IActionResult PutResource([FromBody] ResourceHttp resource)
+    [SwaggerOperation("Creates a resource")]
+    [SwaggerResponse(StatusCodes.Status200OK, "The created resource", typeof(Resource))]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, "Invalid request body", typeof(string))]
+    [SwaggerResponse(StatusCodes.Status401Unauthorized, "Invalid or missing authorization token", typeof(string))]
+    [SwaggerResponse(StatusCodes.Status500InternalServerError, "Internal server error", typeof(string))]
+    public IActionResult PutResource([FromBody] ResourceHttp resourceHttp)
     {
         var token = HttpContext.Request.Headers["Authorization"].ToString().Split(" ").Last();
         var loginRecord = _redisClient.GetObj<Login>(token)!;
-        if (!resource.Id.HasValue || resource.Id == Guid.Empty)
+        Resource? resource;
+        if (!resourceHttp.Id.HasValue || resourceHttp.Id == Guid.Empty)
         {
-            _database.Resources.Add(resource.GetResource(loginRecord.DiscordId));
+            resource = resourceHttp.GetResource(loginRecord.DiscordId);
+            _database.Resources.Add(resource);
         }
         else
         {
-            var oldResource = _database.Resources.FirstOrDefault(t => t.Id == resource.Id);
-            if (oldResource is null)
+            resource = _database.Resources.Include(resource1 => resource1.Category).Include(resource1 => resource1.Expansion).FirstOrDefault(t => t.Id == resourceHttp.Id);
+            if (resource is null)
             {
-                return NotFound();
+                return Problem();
             }
-            _database.Resources.Update(resource.GetUpdate(oldResource));
+            _database.Database.ExecuteSqlRaw(@"UPDATE ""Resources"" SET ""ExpansionId"" = {0}, ""CategoryId"" = {1}, ""HtmlContent"" = {2}, ""MarkdownContent"" = {3}, ""PageName"" = {4}, ""Published"" = {5} WHERE ""Id"" = {6}", resourceHttp.ExpansionId ?? resource.ExpansionId, resourceHttp.CategoryId ?? resource.CategoryId, resourceHttp.HtmlContent ?? resource.HtmlContent, resourceHttp.MarkdownContent ?? resource.MarkdownContent, resourceHttp.PageName ?? resource.PageName, resourceHttp.Publish ?? resource.Published, resourceHttp.Id);
         }
         _database.SaveChanges();
-        return Ok();
+        resource = _database.Resources.Include(resource1 => resource1.Category).Include(resource1 => resource1.Expansion).First(t => t.Id == resource.Id);
+        return Ok(new
+        {
+            resource.Id,
+            Category = new { resource.Category.Id, resource.Category.Name, resource.Category.Description, resource.Category.IconUrl },
+            Expansion = new { resource.Expansion.Id, resource.Expansion.Name, resource.Expansion.Description, resource.Expansion.IconUrl },
+            resource.PageName,
+            resource.Published,
+            resource.HtmlContent,
+            resource.MarkdownContent
+        });
     }
 
     [HttpDelete]
     [Route("{id}")]
     [ServiceFilter(typeof(AuthFilter))]
+    [SwaggerOperation("Deletes a resource")]
+    [SwaggerResponse(StatusCodes.Status404NotFound, "Returns if resource id isn't in database")]
+    [SwaggerResponse(StatusCodes.Status200OK, "Returns if successful")]
+    [SwaggerResponse(StatusCodes.Status500InternalServerError, "Internal server error", typeof(string))]
     public IActionResult DeleteResource(Guid id)
     {
-        var resource = _database.Resources.FirstOrDefault(t => t.Id == id);
+        var resource = _database.Resources.Include(t => t.Files).FirstOrDefault(t => t.Id == id);
         if (resource is null)
         {
             return NotFound();
         }
+        resource.Files.ForEach(DeleteFile);
         _database.Resources.Remove(resource);
         _database.SaveChanges();
         return Ok();
@@ -65,6 +100,10 @@ public class ResourcesController : ControllerBase
 
     [HttpGet]
     [Route("{id}")]
+    [SwaggerOperation("Gets a resource")]
+    [SwaggerResponse(StatusCodes.Status404NotFound, "Returns if resource id isn't in database")]
+    [SwaggerResponse(StatusCodes.Status200OK, "Returns if successful", typeof(Resource))]
+    [SwaggerResponse(StatusCodes.Status500InternalServerError, "Internal server error", typeof(string))]
     public IActionResult GetResource(Guid id)
     {
         var resource = _database.Resources.Include(resource => resource.Category).Include(resource => resource.Expansion).FirstOrDefault(t => t.Id == id);
@@ -72,11 +111,23 @@ public class ResourcesController : ControllerBase
         {
             return NotFound();
         }
-        return Ok(new { resource.Id, resource.Category, resource.Expansion, resource.PageName, resource.HtmlContent, resource.MarkdownContent });
+        return Ok(new
+        {
+            resource.Id,
+            Category = new { resource.Category.Id, resource.Category.Name, resource.Category.Description, resource.Category.IconUrl },
+            Expansion = new { resource.Expansion.Id, resource.Expansion.Name, resource.Expansion.Description, resource.Expansion.IconUrl },
+            resource.PageName,
+            resource.HtmlContent,
+            resource.MarkdownContent
+        });
     }
 
     [HttpGet]
     [Route("{id}/files")]
+    [SwaggerOperation("Gets all files for a resource")]
+    [SwaggerResponse(StatusCodes.Status404NotFound, "Returns if resource id isn't in database")]
+    [SwaggerResponse(StatusCodes.Status200OK, "Returns if successful", typeof(IEnumerable<FileReturn>))]
+    [SwaggerResponse(StatusCodes.Status500InternalServerError, "Internal server error", typeof(string))]
     public IActionResult GetResourceFiles(Guid id)
     {
         var resource = _database.Resources.Include(resource => resource.Files).FirstOrDefault(t => t.Id == id);
@@ -89,6 +140,9 @@ public class ResourcesController : ControllerBase
 
     [HttpGet]
     [Route("categories")]
+    [SwaggerOperation("Gets all categories")]
+    [SwaggerResponse(StatusCodes.Status200OK, "Returns if successful", typeof(IEnumerable<Category>))]
+    [SwaggerResponse(StatusCodes.Status500InternalServerError, "Internal server error", typeof(string))]
     public IActionResult GetCategories()
     {
         return Ok(_database.Categories.Select(t => new { t.Id, t.Name, t.Description, t.IconUrl }));
@@ -96,6 +150,9 @@ public class ResourcesController : ControllerBase
 
     [HttpGet]
     [Route("expansions")]
+    [SwaggerOperation("Gets all expansions")]
+    [SwaggerResponse(StatusCodes.Status200OK, "Returns if successful", typeof(IEnumerable<Expansion>))]
+    [SwaggerResponse(StatusCodes.Status500InternalServerError, "Internal server error", typeof(string))]
     public IActionResult GetExpansions()
     {
         return Ok(_database.Expansions.Select(t => new { t.Id, t.Name, t.Description, t.IconUrl }));
@@ -103,6 +160,13 @@ public class ResourcesController : ControllerBase
 
     [HttpPost]
     [Route("upload")]
+    [ServiceFilter(typeof(AuthFilter))]
+    [SwaggerOperation("Uploads a file for a resource post")]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, "Invalid request body", typeof(string))]
+    [SwaggerResponse(StatusCodes.Status401Unauthorized, "Invalid or missing authorization token", typeof(string))]
+    [SwaggerResponse(StatusCodes.Status404NotFound, "Returns if resource id isn't in database")]
+    [SwaggerResponse(StatusCodes.Status200OK, "Returns if successful", typeof(FileReturn))]
+    [SwaggerResponse(StatusCodes.Status500InternalServerError, "Internal server error", typeof(string))]
     public IActionResult UploadFile([FromForm] FileUpload upload)
     {
         var resource = _database.Resources.Include(t => t.Category).Include(t => t.Expansion).FirstOrDefault(t => t.Id == upload.Id);
@@ -123,19 +187,51 @@ public class ResourcesController : ControllerBase
         var resourceFile = new ResourceFile(null, upload.Id, file.FileName, ConvertFile(path, Path.GetExtension(file.FileName)[1..]).Replace(@"\", "/"));
         _database.ResourceFiles.Add(resourceFile);
         _database.SaveChanges();
-        return Ok(new { resourceFile.Id, resourceFile.Name, Path = resourceFile.Path });
+        return Ok(new { resourceFile.Id, resourceFile.Name, resourceFile.Path });
+    }
+
+    [HttpDelete]
+    [Route("files/{id}")]
+    [ServiceFilter(typeof(AuthFilter))]
+    [SwaggerOperation("Deletes a file for a resource post")]
+    [SwaggerResponse(StatusCodes.Status401Unauthorized, "Invalid or missing authorization token", typeof(string))]
+    [SwaggerResponse(StatusCodes.Status404NotFound, "Returns if resource id isn't in database")]
+    [SwaggerResponse(StatusCodes.Status200OK, "Returns if successful", typeof(FileReturn))]
+    [SwaggerResponse(StatusCodes.Status500InternalServerError, "Internal server error", typeof(string))]
+    public IActionResult DeleteFile(Guid id)
+    {
+        var resourceFile = _database.ResourceFiles.FirstOrDefault(t => t.Id == id);
+        if (resourceFile is null)
+        {
+            return NotFound("Could not find connected resource. Have you saved a draft yet?");
+        }
+
+        DeleteFile(resourceFile);
+        _database.ResourceFiles.Remove(resourceFile);
+        _database.SaveChanges();
+        return Ok();
+    }
+
+    private void DeleteFile(ResourceFile file)
+    {
+        var path = Path.Combine(_environmentContainer.Get("EDITOR_RESOURCE_PATH"), file.Path);
+        if (System.IO.File.Exists(path))
+        {
+            System.IO.File.Delete(path);
+        }
     }
 
     private string ConvertFile(string path, string ext)
     {
         var process = new Process();
         var ret = path;
+        path = Path.Combine(_environmentContainer.Get("EDITOR_RESOURCE_PATH"), path);
         switch (ext)
         {
             case "png" or "jpg" or "jpeg":
                 process.StartInfo.FileName = "convert";
                 ret += ".webp";
-                process.StartInfo.Arguments = $"{path}.{ext} {path}.webp";
+                process.StartInfo.Arguments = $"{path} {path}.webp";
                 break;
             case "mp4":
                 process.StartInfo.FileName = "ffprobe";
@@ -157,11 +253,12 @@ public class ResourcesController : ControllerBase
                 };
                 process.StartInfo.FileName = "ffmpeg";
                 ret += ".webm";
-                process.StartInfo.Arguments = $"-i {path}.{ext} -c:v libvpx-vp9 -crf {crf} -b:v 0 -lossless 1 -c:a copy {path}.webm";
+                process.StartInfo.Arguments = $"-i {path} -c:v libvpx-vp9 -crf {crf} -b:v 0 -lossless 1 -c:a copy {path}.webm";
                 break;
         }
         process.Start();
         process.WaitForExit();
+        System.IO.File.Delete(path);
         return ret;
     }
 }
@@ -180,3 +277,5 @@ public record ResourceHttp(Guid? Id, Guid? CategoryId, Guid? ExpansionId, string
 };
 
 public record FileUpload(IFormFile File, Guid Id);
+
+public record FileReturn(Guid Id, string Name, string Path);
