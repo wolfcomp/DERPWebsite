@@ -1,5 +1,4 @@
 ﻿using Discord;
-using Discord.WebSocket;
 using NLog.Targets;
 
 namespace PDPWebsite;
