@@ -30,8 +30,7 @@ const urlPath = "https://pdp.wildwolf.dev/files/victoryposes/";
 async function getImages(path?: string) {
     const resp = await fetch(urlPath + (path ? path : ""));
     const data = await resp.text();
-    const domData = new DOMParser().parseFromString(data, "text/html");
-    return Array.from(domData.querySelectorAll("body > pre > a") as NodeListOf<HTMLAnchorElement>).map(t => t.href.replace(t.origin, "")).map((t) => t.substring(1)).slice(1);
+    return data.split("\n").map(t => t.trim()).filter(t => t.startsWith("<a")).map(t => t.substring(t.indexOf("href=") + 6, t.indexOf(">") - 1));
 }
 
 async function getAllImages() {
