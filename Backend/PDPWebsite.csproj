@@ -30,6 +30,8 @@
 
   <ItemGroup>
     <PackageReference Include="Discord.Net" Version="3.13.0" />
+    <PackageReference Include="GraphQL.Client" Version="6.0.2" />
+    <PackageReference Include="GraphQL.Client.Serializer.SystemTextJson" Version="6.0.2" />
     <PackageReference Include="Lumina" Version="3.15.2" />
     <PackageReference Include="Lumina.Excel" Version="6.5.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.11">

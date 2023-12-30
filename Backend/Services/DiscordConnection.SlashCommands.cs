@@ -138,7 +138,7 @@ public partial class DiscordConnection
             await arg.RespondAsync($"This command can only be used in the following channels: {string.Join(", ", channels.Select(t => $"<#{t}>"))}", ephemeral: true);
             return;
         }
-        var instance = ActivatorUtilities.CreateInstance(_provider, type, arg);
+        var instance = ActivatorUtilities.CreateInstance(_provider, type, arg, _gameClient);
         var method = type.GetMethods().FirstOrDefault(t => t.IsSameCommand(subCommand!));
         if (method == null)
         {

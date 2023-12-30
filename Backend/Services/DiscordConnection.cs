@@ -23,6 +23,7 @@ public partial class DiscordConnection : IDisposable
     private readonly ILogger<DiscordConnection> _logger;
     private readonly RedisClient _redisClient;
     private readonly CancellationTokenSource _cts = new();
+    private readonly GameClient _gameClient;
     private Type[] _slashCommandProcessors = Array.Empty<Type>();
     private NLogLevel _logLevel = NLogLevel.Warn;
     private SocketVoiceChannel _tempVoiceChannel = null!;
@@ -37,12 +38,13 @@ public partial class DiscordConnection : IDisposable
     public static Action? OnReady { get; set; }
     public static DiscordConnection? Instance { get; set; }
 
-    public DiscordConnection(ILogger<DiscordConnection> logger, EnvironmentContainer environmentContainer, RedisClient redisClient, IServiceProvider provider)
+    public DiscordConnection(ILogger<DiscordConnection> logger, EnvironmentContainer environmentContainer, RedisClient redisClient, GameClient gameClient, IServiceProvider provider)
     {
         _logger = logger;
         _environmentContainer = environmentContainer;
         _provider = provider;
         _redisClient = redisClient;
+        _gameClient = gameClient;
         DiscordClient = new DiscordSocketClient(new DiscordSocketConfig
         {
             GatewayIntents = GatewayIntents.All,
