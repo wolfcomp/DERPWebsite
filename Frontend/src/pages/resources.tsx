@@ -2,7 +2,10 @@ import { MouseEventHandler, useEffect, useRef, useState } from "react";
 import { Category, Expansion, Resource } from "../structs/resource";
 import { useRequest } from "../components/request";
 import { useAuth } from "../components/auth";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import hljs from "highlight.js";
+import "highlight.js/styles/monokai-sublime.css";
+import { useToast } from "../components/toast";
 
 export default function Resources() {
     const [resources, setResources] = useState<Resource[]>([]);
@@ -11,7 +14,9 @@ export default function Resources() {
     const [selectedExpansion, setSelectedExpansion] = useState<Expansion | null>(null);
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
     const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
+    const { categoryId, expansionId, resourceId } = useParams();
     const request = useRequest().request;
+    const toast = useToast().toast;
     const navigate = useNavigate();
     const auth = useAuth();
 
@@ -49,12 +54,24 @@ export default function Resources() {
         var res = await request("/api/resources/expansions");
         var data = await res.json() as Expansion[];
         setExpansions(data);
+        if (expansionId) {
+            var expansion = data.find(t => t.id === expansionId);
+            if (expansion) {
+                setSelectedExpansion(expansion);
+            }
+        }
     }
 
     async function getCategories() {
         var res = await request("/api/resources/categories");
         var data = await res.json() as Category[];
         setCategories(data);
+        if (categoryId) {
+            var category = data.find(t => t.id === categoryId);
+            if (category) {
+                setSelectedCategory(category);
+            }
+        }
     }
 
     async function getFullResource(id: string) {
@@ -76,48 +93,29 @@ export default function Resources() {
     }, [setCategories]);
 
     useEffect(() => {
-        var hash = "";
+        var sParams = "";
         if (selectedExpansion !== null)
-            hash += `e=${selectedExpansion.id}`;
+            sParams += `${selectedExpansion.id}`;
         if (selectedCategory !== null) {
-            if (hash !== "")
-                hash += "&";
+            if (sParams !== "")
+                sParams += "/";
 
-            hash += `c=${selectedCategory.id}`;
+            sParams += `${selectedCategory.id}`;
         }
         if (selectedResource !== null) {
-            if (hash !== "")
-                hash += "&";
+            if (sParams !== "")
+                sParams += "/";
 
-            hash += `r=${selectedResource.id}`;
+            sParams += `${selectedResource.id}`;
         }
-        window.location.hash = hash;
+        navigate(`/resources/${sParams}`, { replace: true });
     }, [selectedExpansion, selectedCategory, selectedResource]);
 
     useEffect(() => {
-        if (window.location.hash) {
-            var hash = window.location.hash.substring(1);
-            var params = new URLSearchParams(hash);
-            var expansion = params.get("e");
-            var category = params.get("c");
-            var resource = params.get("r");
-            if (expansion) {
-                var expansion2 = expansions.find(t => t.id === expansion);
-                if (expansion2) {
-                    setSelectedExpansion(expansion2);
-                }
-            }
-            if (category) {
-                var category2 = categories.find(t => t.id === category);
-                if (category2) {
-                    setSelectedCategory(category2);
-                }
-            }
-            if (resource) {
-                getFullResource(resource);
-            }
+        if (resourceId) {
+            getFullResource(resourceId);
         }
-    }, [setResources, setExpansions, setCategories, setSelectedExpansion, setSelectedCategory, setSelectedResource]);
+    }, [resourceId]);
 
     function getFilteredResources(withExpansion: boolean = true, withCategory: boolean = true) {
         if (!withExpansion) {
@@ -137,18 +135,29 @@ export default function Resources() {
 
     return (
         <div className="container mt-4">
-            <div className="d-flex justify-content-between">
+            <div className="d-flex">
                 {selectedResource && <>
-                    <div className="me-auto d-flex" style={{ cursor: "pointer" }} onClick={() => {
+                    <div className="me-auto d-flex align-content-center flex-wrap" style={{ cursor: "pointer" }} onClick={() => {
                         setSelectedResource(null);
                     }}>
                         <i className="bi bi-arrow-90deg-up me-2"></i>
                         <h5>Back</h5>
                     </div>
-                    <h1>{selectedResource.pageName}</h1>
+                    <h1 className="me-2">{selectedResource.pageName}</h1>
+                    <div className="d-flex align-content-center flex-wrap">
+                        {auth.user && <button className="btn btn-primary" onClick={() => {
+                            navigate(`/editor/${selectedResource.id}`);
+                        }}>Edit</button>}
+                        <button className="btn btn-success ms-2" onClick={(e) => {
+                            e.preventDefault();
+                            var loc = `https://pdp.wildwolf.dev/resources/${selectedExpansion.id}/${selectedCategory.id}/${selectedResource.id}`;
+                            navigator.clipboard.writeText(loc);
+                            toast("Copied link to clipboard", "Resources", "success");
+                        }}>Share</button>
+                    </div>
                 </>}
                 {!selectedResource && <>
-                    <h1>Resources</h1>
+                    <h1 className="me-auto">Resources</h1>
                     <div className="d-flex align-items-center">
                         <button className="btn btn-primary" onClick={() => {
                             navigate("/editor");
@@ -167,7 +176,7 @@ export default function Resources() {
                         <>
                             <div className="row">
                                 <div className="d-flex justify-content-between align-items-center">
-                                    <div className="me-auto d-flex" style={{ cursor: "pointer" }} onClick={() => {
+                                    <div className="me-auto d-flex align-content-center flex-wrap" style={{ cursor: "pointer" }} onClick={() => {
                                         setSelectedExpansion(null);
                                     }}>
                                         <i className="bi bi-arrow-90deg-up me-2"></i>
@@ -186,7 +195,7 @@ export default function Resources() {
                         <>
                             <div className="row">
                                 <div className="d-flex justify-content-between align-items-center">
-                                    <div className="me-auto d-flex" style={{ cursor: "pointer" }} onClick={() => {
+                                    <div className="me-auto d-flex align-content-center flex-wrap" style={{ cursor: "pointer" }} onClick={() => {
                                         setSelectedCategory(null);
                                     }}>
                                         <i className="bi bi-arrow-90deg-up me-2"></i>
@@ -297,6 +306,10 @@ function ResourceRender({ resource }: { resource: Resource }) {
                         }
                     }
                 });
+            });
+            divRef.current.querySelectorAll("pre code").forEach((el) => {
+                const el2 = el as HTMLElement;
+                hljs.highlightElement(el2);
             });
         }
     }, [resource]);

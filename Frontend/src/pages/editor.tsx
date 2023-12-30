@@ -1,6 +1,21 @@
 import MarkdownEditor from "@uiw/react-markdown-editor";
+import hljs from "highlight.js";
 import DOMPurify from "dompurify";
 import { parse } from "marked";
+import { rehype } from "rehype";
+import rehypeMinifyAttributeWhitespace from "rehype-minify-attribute-whitespace";
+import rehypeMinifyEnumeratedAttribute from "rehype-minify-enumerated-attribute";
+import rehypeMinifyLanguage from "rehype-minify-language";
+import rehypeMinifyMetaContent from "rehype-minify-meta-content";
+import rehypeMinifyWhitespace from "rehype-minify-whitespace";
+import rehypeNormalizeAttributeValueCase from "rehype-normalize-attribute-value-case";
+import rehypeRemoveComments from "rehype-remove-comments";
+import rehypeRemoveDuplicateAttributeValues from "rehype-remove-duplicate-attribute-values";
+import rehypeRemoveEmptyAttribute from "rehype-remove-empty-attribute";
+import rehypeRemoveMetaHttpEquiv from "rehype-remove-meta-http-equiv";
+import rehypeRemoveStyleTypeCss from "rehype-remove-style-type-css";
+import rehypeSortAttributeValues from "rehype-sort-attribute-values";
+import rehypeSortAttributes from "rehype-sort-attributes";
 
 import { useEffect, useRef, useState } from "react";
 import { useRequest } from "../components/request";
@@ -9,6 +24,24 @@ import { useModal } from "../components/modal";
 import { useToast } from "../components/toast";
 import { Category, Expansion, Resource, ResourceFile } from "../structs/resource";
 import "./editor.scss";
+import "highlight.js/styles/monokai-sublime.css";
+import { useNavigate, useParams } from "react-router-dom";
+
+const sanitize = (source: string | Node) => rehype()
+    .use(rehypeMinifyAttributeWhitespace)
+    .use(rehypeMinifyEnumeratedAttribute)
+    .use(rehypeMinifyLanguage)
+    .use(rehypeMinifyMetaContent)
+    .use(rehypeMinifyWhitespace)
+    .use(rehypeNormalizeAttributeValueCase)
+    .use(rehypeRemoveComments)
+    .use(rehypeRemoveDuplicateAttributeValues)
+    .use(rehypeRemoveEmptyAttribute)
+    .use(rehypeRemoveMetaHttpEquiv)
+    .use(rehypeRemoveStyleTypeCss)
+    .use(rehypeSortAttributeValues)
+    .use(rehypeSortAttributes)
+    .processSync(DOMPurify.sanitize(source, { ADD_TAGS: ["iframe"] })).value.toString();
 
 export default function Editor() {
     const [markdown, setMarkdown] = useState<string>('');
@@ -17,6 +50,7 @@ export default function Editor() {
     const [display, setDisplay] = useState<"editor" | "preview">("editor");
     const [resource, setResource] = useState<Resource | null>(null);
     const [resourceFiles, setResourceFiles] = useState<ResourceFile[]>([]);
+    const { id } = useParams();
     const divRef = useRef<HTMLDivElement>(null);
     const scrollRefs = useRef<Record<string, HTMLElement>>({});
     const request = useRequest().request;
@@ -25,7 +59,7 @@ export default function Editor() {
     useEffect(() => {
         try {
             const html = parse(markdown);
-            const clean = DOMPurify.sanitize(html);
+            const clean = sanitize(html);
 
             setPrevMarkdown(clean);
         }
@@ -71,6 +105,10 @@ export default function Editor() {
                     }
                 });
             });
+            divRef.current.querySelectorAll("pre code").forEach((el) => {
+                const el2 = el as HTMLElement;
+                hljs.highlightElement(el2);
+            });
         }
     }, [prevMarkdown]);
 
@@ -84,8 +122,9 @@ export default function Editor() {
     }, [setStatuses])
 
     useEffect(() => {
-        getResource();
-    }, []);
+        if (id)
+            getResource();
+    }, [id]);
 
     async function getFiles() {
         const res = await request(`/api/resources/${resource?.id}/files`);
@@ -94,13 +133,7 @@ export default function Editor() {
     }
 
     async function getResource() {
-        const hashContent = window.location.hash.substring(1).split("&").map((s) => s.split("=")).reduce((prev, curr) => {
-            prev[curr[0]] = curr[1];
-            return prev;
-        }, {} as Record<string, string>);
-        if (!hashContent.hasOwnProperty("id"))
-            return;
-        const res = await request(`/api/resources/${hashContent["id"]}`);
+        const res = await request(`/api/resources/${id}`);
         const data = await res.json() as Resource;
         setResource(data);
         setMarkdown(data.markdownContent);
@@ -164,14 +197,15 @@ function EditorSaveModal({ pageName, markdown, category, expansion, id, onSave }
     const modal = useModal();
     const request = useRequest().request;
     const toast = useToast().toast;
+    const navigate = useNavigate();
     const [pageNameInternal, setPageNameInternal] = useState<string>(pageName || "");
     const [categoryInternal, setCategoryInternal] = useState<string>(category || "");
     const [expansionInternal, setExpansionInternal] = useState<string>(expansion || "");
     const [categories, setCategories] = useState<Category[]>([]);
     const [expansions, setExpansions] = useState<Expansion[]>([]);
     const [validation, setValidation] = useState<Record<string, string>>({});
-    const allowedTitleChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_ ";
-    const charLimit = 32;
+    const allowedTitleChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_ ()!@#$%^&*+=[]{}|;:,./<>?~`";
+    const charLimit = 50;
 
     function validate() {
         var validationInternal: Record<string, string> = {};
@@ -222,7 +256,7 @@ function EditorSaveModal({ pageName, markdown, category, expansion, id, onSave }
         try {
             validate();
             const html = parse(markdown);
-            const clean = DOMPurify.sanitize(html).replaceAll("\r", "").replaceAll("\n", "");
+            const clean = sanitize(html);
             var res: Resource =
             {
                 categoryId: categoryInternal,
@@ -242,7 +276,7 @@ function EditorSaveModal({ pageName, markdown, category, expansion, id, onSave }
             });
             res = await req.json() as Resource;
             modal(null);
-            window.location.hash = `id=${res.id}`;
+            navigate("/editor/" + res.id, { replace: true });
             onSave();
         }
         catch (e) {
@@ -396,7 +430,7 @@ function FileList({ files, onDelete }: { files: ResourceFile[], onDelete: () => 
 
     return (
         <div className="mt-2 mb-2">
-            <div className="d-flex">
+            <div className="d-flex flex-wrap">
                 {filesShown.map((file) => <FileCard key={file.id} file={file} onDelete={onDelete} />)}
             </div>
             <div className="d-flex justify-content-between mt-2">
@@ -423,7 +457,7 @@ function FileCard({ file, onDelete }: { file: ResourceFile, onDelete: () => void
     }
 
     return (
-        <div className="card me-2">
+        <div className="card me-2 mb-2">
             <div className="card-body">
                 <img src={`https://pdp.wildwolf.dev/files/guides/${file.path}`} alt={file.name} style={{ maxWidth: "200px", maxHeight: "125px" }} />
                 <div className="d-flex justify-content-between mt-2">

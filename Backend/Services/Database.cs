@@ -1,6 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-
-namespace PDPWebsite.Services;
+﻿namespace PDPWebsite.Services;
 
 public class Database : DbContext
 {
@@ -59,12 +57,6 @@ public class Database : DbContext
         modelBuilder.Entity<Resource>(options =>
         {
             options.HasKey(e => e.Id);
-
-            options.Property(e => e.HtmlContent)
-                .HasConversion(new ValueConverter<string, string>(
-                    v => v,
-                    v => v.Replace("\n", "").Replace("\r", "").Replace("\t", "").Replace("  ", "")
-                    ));
         });
 
         modelBuilder.Entity<ResourceFile>(options =>

@@ -1,6 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Reflection;
-using PDPWebsite.Models;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace PDPWebsite.Controllers;
@@ -169,13 +167,14 @@ public class ResourcesController : ControllerBase
     [SwaggerResponse(StatusCodes.Status500InternalServerError, "Internal server error", typeof(string))]
     public IActionResult UploadFile([FromForm] FileUpload upload)
     {
+        var fileId = Guid.NewGuid().ToString();
         var resource = _database.Resources.Include(t => t.Category).Include(t => t.Expansion).FirstOrDefault(t => t.Id == upload.Id);
         if (resource is null)
         {
             return NotFound("Could not find connected resource. Have you saved a draft yet?");
         }
         var file = upload.File;
-        var path = Path.Combine(resource.Expansion.Path, resource.Category.Path, Path.GetFileNameWithoutExtension(file.FileName));
+        var path = Path.Combine(resource.Expansion.Path, resource.Category.Path, fileId);
         if (!Directory.Exists(Path.Combine(_environmentContainer.Get("EDITOR_RESOURCE_PATH"), resource.Expansion.Path, resource.Category.Path)))
         {
             Directory.CreateDirectory(Path.Combine(_environmentContainer.Get("EDITOR_RESOURCE_PATH"), resource.Expansion.Path, resource.Category.Path));
@@ -255,6 +254,10 @@ public class ResourcesController : ControllerBase
                 ret += ".webm";
                 process.StartInfo.Arguments = $"-i {path} -c:v libvpx-vp9 -crf {crf} -b:v 0 -lossless 1 -c:a copy {path}.webm";
                 break;
+            default:
+                ret += "." + ext;
+                System.IO.File.Move(path, path + "." + ext);
+                return ret;
         }
         process.Start();
         process.WaitForExit();

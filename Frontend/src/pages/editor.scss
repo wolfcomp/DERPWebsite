@@ -1,5 +1,5 @@
 .editor-extra {
-    max-height: 1000px;
+    max-height: 1150px;
     opacity: 1;
     position: relative;
     transition:
@@ -14,4 +14,10 @@
     .bg-body {
         --bs-bg-opacity: 0.85;
     }
+}
+.md-editor-toolbar-warp {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background-color: var(--color-canvas-subtle);
 }
