@@ -13,7 +13,7 @@ public class Market : ISlashCommandProcessor
     private readonly ILogger<Market> _logger;
     private readonly SocketSlashCommand _arg;
     private const string ItemCountLeft = "With %d more";
-    private const string Gil = "<:gil:1077843055941533768>";
+    private const string Gil = "<:Gil:1077853297299435550>";
 
     public Market(UniversalisClient universalisClient, ILogger<Market> logger, GameClient gameClient, SocketSlashCommand arg)
     {
