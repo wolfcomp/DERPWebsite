@@ -66,7 +66,7 @@ namespace PDPWebsite.Patching.ZiPatch.Chunk.SqpkCommand
         private static bool RemoveAllFilter(string filePath) =>
             !new[] { ".var", "00000.bk2", "00001.bk2", "00002.bk2", "00003.bk2" }.Any(filePath.EndsWith);
 
-        public override void ApplyChunk(ZiPatchConfig config)
+        public override void ApplyChunk(ZiPatchConfig config, IProgress<float> progress)
         {
             switch (Operation)
             {
@@ -83,7 +83,7 @@ namespace PDPWebsite.Patching.ZiPatch.Chunk.SqpkCommand
 
                     fileStream.Seek(FileOffset, SeekOrigin.Begin);
                     foreach (var block in CompressedData)
-                        block.DecompressInto(fileStream);
+                        block.DecompressInto(fileStream, progress);
 
                     break;
 

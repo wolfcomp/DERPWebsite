@@ -36,14 +36,15 @@ namespace PDPWebsite.Patching.ZiPatch.Util
             }
         }
 
-        public void DecompressInto(Stream outStream)
+        public void DecompressInto(Stream outStream, IProgress<float> progress)
         {
+            var relativeProgress = new Progress<long>(totalBytes => progress.Report((float)totalBytes / DecompressedSize));
             if (IsCompressed)
                 using (var stream = new DeflateStream(new MemoryStream(CompressedBlock), CompressionMode.Decompress))
-                    stream.CopyTo(outStream);
+                    stream.CopyTo(outStream, 81920, relativeProgress);
             else
                 using (var stream = new MemoryStream(CompressedBlock))
-                    stream.CopyTo(outStream);
+                    stream.CopyTo(outStream, 81920, relativeProgress);
         }
     }
 }

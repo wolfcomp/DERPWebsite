@@ -33,7 +33,7 @@ namespace PDPWebsite.Patching.ZiPatch.Chunk.SqpkCommand
             Reader.ReadUInt32(); // Reserved
         }
 
-        public override void ApplyChunk(ZiPatchConfig config)
+        public override void ApplyChunk(ZiPatchConfig config, IProgress<float> progress)
         {
             TargetFile.ResolvePath(config.Platform);
 

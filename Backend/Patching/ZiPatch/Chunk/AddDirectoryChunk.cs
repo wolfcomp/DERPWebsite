@@ -25,7 +25,7 @@ namespace PDPWebsite.Patching.ZiPatch.Chunk
 
         public AddDirectoryChunk(ChecksumBinaryReader reader, long offset, long size) : base(reader, offset, size) {}
 
-        public override void ApplyChunk(ZiPatchConfig config)
+        public override void ApplyChunk(ZiPatchConfig config, IProgress<float> progress)
         {
             Directory.CreateDirectory(config.GamePath + DirName);
         }

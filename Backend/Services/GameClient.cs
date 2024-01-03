@@ -1,5 +1,7 @@
-﻿using System.Text;
+﻿using System.Collections.Immutable;
+using System.Text;
 using Discord;
+using Discord.Rest;
 using Lumina;
 using Lumina.Data;
 using Lumina.Data.Files;
@@ -78,36 +80,43 @@ public class GameClient : IDisposable
         return LoadMarket();
     }
 
-    public async Task Update(IMessageChannel channel)
+    public async Task Update(RestInteractionMessage message)
     {
         if (_updateThread != null && _updateThread.IsAlive)
         {
-            await channel.SendMessageAsync("Update already in progress.");
+            await message.ModifyAsync(t => t.Content = "Update already in progress.");
             return;
         }
         _updateThread = new Thread(async () =>
         {
             var builder = new EmbedBuilder().WithTitle("Update Status.")
                 .WithDescription("Initializing");
-            var message = await channel.SendMessageAsync(embed: builder.Build());
+            await message.ModifyAsync(t =>
+            {
+                t.Content = null;
+                t.Embed = builder.Build();
+            });
             var updateTask = _patchInstaller.Update();
             while (!updateTask.IsCompleted)
             {
-                await Task.Delay(TimeSpan.FromSeconds(10));
+                await Task.Delay(TimeSpan.FromSeconds(5));
+                var sb = new StringBuilder();
                 if (_patchInstaller.DownloadProgress.Any())
                 {
-                    var sb = new StringBuilder();
-                    foreach (var (_, download) in _patchInstaller.DownloadProgress)
+                    sb.AppendLine("Download progress:");
+                    foreach (var (_, download) in _patchInstaller.DownloadProgress.ToImmutableDictionary())
                     {
                         var (desc, ver, progress) = download;
                         sb.AppendLine($"{desc} - {ver}\n{progress:P}");
                     }
-                    builder.WithDescription(sb.ToString());
                 }
-                else
+
                 {
-                    var (desc, ver, goalVer, progress) = _patchInstaller.CurrentInstallProgress;
-                    builder.WithDescription($"{desc} - {ver} -> {goalVer}\n{progress:P}");
+                    if (sb.Length > 0) sb.AppendLine();
+                    sb.AppendLine("Install progress:");
+                    var (desc, ver, goalVer, progress, fileProgress) = _patchInstaller.CurrentInstallProgress;
+                    sb.AppendLine($"{desc} - {ver} {fileProgress:P} -> {goalVer}\n{progress:P}");
+                    builder.WithDescription(sb.ToString());
                 }
                 await message.ModifyAsync(msg => { msg.Embed = builder.Build(); });
             }

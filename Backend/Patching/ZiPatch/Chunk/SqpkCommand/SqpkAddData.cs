@@ -39,7 +39,7 @@ namespace PDPWebsite.Patching.ZiPatch.Chunk.SqpkCommand
             BlockData = Reader.ReadBytes(checked((int)BlockNumber));
         }
 
-        public override void ApplyChunk(ZiPatchConfig config)
+        public override void ApplyChunk(ZiPatchConfig config, IProgress<float> progress)
         {
             TargetFile.ResolvePath(config.Platform);
 

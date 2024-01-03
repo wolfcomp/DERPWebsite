@@ -51,7 +51,7 @@ namespace PDPWebsite.Patching.ZiPatch.Chunk.SqpkCommand
             HeaderData = Reader.ReadBytes(HEADER_SIZE);
         }
 
-        public override void ApplyChunk(ZiPatchConfig config)
+        public override void ApplyChunk(ZiPatchConfig config, IProgress<float> progress)
         {
             TargetFile.ResolvePath(config.Platform);
 

@@ -103,7 +103,7 @@ namespace PDPWebsite.Patching.ZiPatch.Chunk
             using var advanceAfter = new AdvanceOnDispose(Reader, Size);
         }
 
-        public virtual void ApplyChunk(ZiPatchConfig config) {}
+        public virtual void ApplyChunk(ZiPatchConfig config, IProgress<float> progress) {}
 
         protected void ReadChecksum()
         {

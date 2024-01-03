@@ -42,7 +42,7 @@ namespace PDPWebsite.Patching.ZiPatch.Chunk
                 OptionValue = false; // defaults to false if OptionKind isn't valid
         }
 
-        public override void ApplyChunk(ZiPatchConfig config)
+        public override void ApplyChunk(ZiPatchConfig config, IProgress<float> progress)
         {
             switch (OptionKind)
             {

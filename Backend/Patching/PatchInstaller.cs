@@ -4,11 +4,13 @@
  */
 
 using System.Collections.Concurrent;
+using System.IO;
 using System.Net;
 using GraphQL;
 using GraphQL.Client.Http;
 using GraphQL.Client.Serializer.SystemTextJson;
 using PDPWebsite.Patching.ZiPatch;
+using PDPWebsite.Patching.ZiPatch.Chunk;
 using PDPWebsite.Patching.ZiPatch.Util;
 
 namespace PDPWebsite.Patching;
@@ -20,7 +22,7 @@ public class PatchInstaller
     private readonly IReadOnlyList<PatchInstallerRepoOptions> _repoOptions = new[] { new PatchInstallerRepoOptions("", "4e9a232b"), new PatchInstallerRepoOptions("sqpack/ex1", "6b936f08"), new PatchInstallerRepoOptions("sqpack/ex2", "f29a3eb2"), new PatchInstallerRepoOptions("sqpack/ex3", "859d0e24"), new PatchInstallerRepoOptions("sqpack/ex4", "1bf99b87") };
     private readonly ILogger<PatchInstaller> _logger;
 
-    public (string description, string versionString, string discoveredVer, float progress) CurrentInstallProgress = ("", "", "", 0);
+    public (string description, string versionString, string discoveredVer, float progress, float fileProgress) CurrentInstallProgress = ("", "", "", 0, 0);
     public ConcurrentDictionary<Guid, Tuple<string, string, float>> DownloadProgress = new();
 
     public PatchInstaller(ILogger<PatchInstaller> logger)
@@ -88,6 +90,8 @@ query($repoId:String) {
         _logger.LogInformation($"Assembled gamePath to {gamePath}");
         foreach (var (slug, description, curVer, discoveredVer) in await CheckVersions())
         {
+            DownloadProgress = new ConcurrentDictionary<Guid, Tuple<string, string, float>>();
+            CurrentInstallProgress = (description, curVer, discoveredVer, 0, 0);
             var verPath = _repoOptions.First(t => t.Slug == slug).VerPath;
 #if DEBUG
             verPath = Path.Combine(@"C:\Program Files (x86)\SquareEnix\FINAL FANTASY XIV - A Realm Reborn\game", verPath);
@@ -131,7 +135,6 @@ query($repoId:String) {
                 continue;
             }
             _logger.LogInformation($"Recieved {patches.Data.Repository.Versions?.Length} versions");
-            var downloadTasks = new List<Task<Tuple<ThaliakVersion, FileInfo>>>();
             _logger.LogInformation($"Created list");
             var where = patches.Data.Repository.Versions!.Where(t => t.IsActive!.Value).ToArray();
             _logger.LogInformation($"Filtered pre list");
@@ -143,24 +146,34 @@ query($repoId:String) {
             _logger.LogInformation($"Found {list.Count} updates for {slug}");
             var orderedList = OrderVersionPrereq(list.First(t => t.VersionString == discoveredVer), list, discoveredVer, new List<ThaliakVersion>());
             _logger.LogInformation($"Ordered list");
-            foreach (var patch in orderedList)
+            var downloadTasks = orderedList.Select(patch => new Task<Tuple<ThaliakVersion, FileInfo>>(() => DownloadPatch(patch, tempDir, description).ConfigureAwait(false).GetAwaiter().GetResult())).ToList();
+            var timeCheck = TimeSpan.FromMilliseconds(500);
+            var downloadInitTask = Task.Run(async () =>
             {
-                while (downloadTasks.Count(t => !t.IsCompleted) >= 8)
+                while (downloadTasks.Any(t => t.Status == TaskStatus.Created))
                 {
-                    await Task.Delay(100);
+                    while (downloadTasks.Count(t => t.Status is TaskStatus.WaitingToRun or TaskStatus.Running) > 8)
+                    {
+                        await Task.Delay(timeCheck);
+                    }
+                    var task = downloadTasks.First(t => t.Status == TaskStatus.Created);
+                    task.Start();
+                    await Task.Delay(timeCheck);
                 }
-                downloadTasks.Add(DownloadPatch(patch, tempDir, description));
-            }
-            DownloadProgress.Clear();
-            _logger.LogInformation($"Waiting for downloads to finish");
-            var downloadList = await Task.WhenAll(downloadTasks);
-            _logger.LogInformation($"Done downloading patches for {slug}");
-            foreach (var ((versionString, _, _, _), fileInfo) in downloadList)
+            });
+            var patchIndex = 0;
+            var patchCheck = Task.Run(async () =>
             {
-                CurrentInstallProgress = (description, versionString, discoveredVer, 0);
-                _logger.LogInformation($"Installing {versionString} for {slug}");
-                InstallPatch(fileInfo.FullName, gamePath);
-            }
+                while (patchIndex != downloadTasks.Count)
+                {
+                    var ((versionString, _, _, _), fileInfo) = await downloadTasks[patchIndex].WaitAsync(CancellationToken.None);
+                    CurrentInstallProgress = (description, versionString, discoveredVer, 0, patchIndex / (float)downloadTasks.Count);
+                    _logger.LogInformation($"Installing {versionString} for {slug}");
+                    InstallPatch(fileInfo.FullName, gamePath);
+                    patchIndex++;
+                }
+            });
+            await Task.WhenAll(downloadInitTask, patchCheck);
             await File.WriteAllTextAsync(verPath, discoveredVer);
             _logger.LogInformation($"Done installing updates for {slug}");
         }
@@ -219,11 +232,10 @@ query($repoId:String) {
         {
             var config = new ZiPatchConfig(gamePath) { Store = store };
 
-            var array = patchFile.GetChunks().ToArray();
-            for (var i = 0; i < array.Length; i++)
+            foreach (var t in patchFile.GetChunks())
             {
-                array[i].ApplyChunk(config);
-                CurrentInstallProgress.progress = (float)i / array.Length;
+                var progress = new Progress<float>(pro => CurrentInstallProgress.fileProgress = pro);
+                t.ApplyChunk(config, progress);
             }
         }
 
@@ -259,7 +271,7 @@ public class FFXIVVersion
     {
         var parts = versionString.Split('.');
 
-        if(parts[0][0] == 'H')
+        if (parts[0][0] == 'H')
             parts[0] = parts[0][1..];
 
         char lastChar = parts[4][^1];
@@ -371,16 +383,20 @@ public static class FFXIVVersionExtensions
 
 public static class HttpClientExtensions
 {
-    public static async Task DownloadAsync(this HttpClient client, string requestUri, Stream destination, IProgress<float> progress = null, CancellationToken cancellationToken = default) {
+    public static async Task DownloadAsync(this HttpClient client, string requestUri, Stream destination, IProgress<float> progress = null, CancellationToken cancellationToken = default)
+    {
         // Get the http headers first to examine the content length
-        using (var response = await client.GetAsync(requestUri, HttpCompletionOption.ResponseHeadersRead)) {
+        using (var response = await client.GetAsync(requestUri, HttpCompletionOption.ResponseHeadersRead))
+        {
             var contentLength = response.Content.Headers.ContentLength;
 
-            using (var download = await response.Content.ReadAsStreamAsync(cancellationToken)) {
+            using (var download = await response.Content.ReadAsStreamAsync(cancellationToken))
+            {
 
                 // Ignore progress reporting when no progress reporter was 
                 // passed or when the content length is unknown
-                if (progress == null || !contentLength.HasValue) {
+                if (progress == null || !contentLength.HasValue)
+                {
                     await download.CopyToAsync(destination);
                     return;
                 }
@@ -396,7 +412,8 @@ public static class HttpClientExtensions
 }
 public static class StreamExtensions
 {
-    public static async Task CopyToAsync(this Stream source, Stream destination, int bufferSize, IProgress<long> progress = null, CancellationToken cancellationToken = default) {
+    public static async Task CopyToAsync(this Stream source, Stream destination, int bufferSize, IProgress<long> progress = null, CancellationToken cancellationToken = default)
+    {
         if (source == null)
             throw new ArgumentNullException(nameof(source));
         if (!source.CanRead)
@@ -411,8 +428,32 @@ public static class StreamExtensions
         var buffer = new byte[bufferSize];
         long totalBytesRead = 0;
         int bytesRead;
-        while ((bytesRead = await source.ReadAsync(buffer, 0, buffer.Length, cancellationToken).ConfigureAwait(false)) != 0) {
+        while ((bytesRead = await source.ReadAsync(buffer, 0, buffer.Length, cancellationToken).ConfigureAwait(false)) != 0)
+        {
             await destination.WriteAsync(buffer, 0, bytesRead, cancellationToken).ConfigureAwait(false);
+            totalBytesRead += bytesRead;
+            progress?.Report(totalBytesRead);
+        }
+    }
+
+    public static void CopyTo(this Stream source, Stream destination, int bufferSize, IProgress<long> progress = null)
+    {
+        if (source == null)
+            throw new ArgumentNullException(nameof(source));
+        if (!source.CanRead)
+            throw new ArgumentException("Has to be readable", nameof(source));
+        if (destination == null)
+            throw new ArgumentNullException(nameof(destination));
+        if (!destination.CanWrite)
+            throw new ArgumentException("Has to be writable", nameof(destination));
+        if (bufferSize < 0)
+            throw new ArgumentOutOfRangeException(nameof(bufferSize));
+        var buffer = new byte[bufferSize];
+        long totalBytesRead = 0;
+        int bytesRead;
+        while ((bytesRead = source.Read(buffer, 0, buffer.Length)) != 0)
+        {
+            destination.Write(buffer, 0, bytesRead);
             totalBytesRead += bytesRead;
             progress?.Report(totalBytesRead);
         }

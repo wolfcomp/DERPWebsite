@@ -46,7 +46,7 @@ namespace PDPWebsite.Patching.ZiPatch.Chunk.SqpkCommand
             // Empty 32 + 64 bytes
         }
 
-        public override void ApplyChunk(ZiPatchConfig config)
+        public override void ApplyChunk(ZiPatchConfig config, IProgress<float> progress)
         {
             config.Platform = Platform;
         }

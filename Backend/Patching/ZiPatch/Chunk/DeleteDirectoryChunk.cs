@@ -24,7 +24,7 @@ namespace PDPWebsite.Patching.ZiPatch.Chunk
             DirName = Reader.ReadFixedLengthString(dirNameLen);
         }
 
-        public override void ApplyChunk(ZiPatchConfig config)
+        public override void ApplyChunk(ZiPatchConfig config, IProgress<float> progress)
         {
             Directory.Delete(config.GamePath + DirName);
         }

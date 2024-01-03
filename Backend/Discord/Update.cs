@@ -19,9 +19,8 @@ public class Update : ISlashCommandProcessor
     [SlashCommand("update", "Tries to update FFXIV game data")]
     public async Task Check()
     {
-        await _arg.ModifyOriginalResponseAsync(msg => msg.Content = "Triggering update next message contains progress.");
-        var channel = _arg.Channel;
-        await _gameClient.Update(channel);
+        var message = await _arg.ModifyOriginalResponseAsync(msg => msg.Content = "Triggering update.");
+        await _gameClient.Update(message);
     }
 
     [SlashCommand("check", "Checks the status of the FFXIV game data")]
