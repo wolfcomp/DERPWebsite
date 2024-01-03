@@ -167,7 +167,7 @@ query($repoId:String) {
                 while (patchIndex != downloadTasks.Count)
                 {
                     var ((versionString, _, _, _), fileInfo) = await downloadTasks[patchIndex].WaitAsync(CancellationToken.None);
-                    CurrentInstallProgress = (description, versionString, discoveredVer, 0, patchIndex / (float)downloadTasks.Count);
+                    CurrentInstallProgress = (description, versionString, discoveredVer, patchIndex / (float)downloadTasks.Count, 0);
                     _logger.LogInformation($"Installing {versionString} for {slug}");
                     InstallPatch(fileInfo.FullName, gamePath);
                     patchIndex++;
