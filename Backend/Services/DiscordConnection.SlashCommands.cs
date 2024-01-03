@@ -197,7 +197,8 @@ public partial class DiscordConnection
         }
         catch (Exception e)
         {
-            _logger.LogError(e, $"SlashCommandExecuted failed while executing: `/{command} {subCommand}` with args: {string.Join(", ", args.Select(t => t.ToString()))}");
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+            _logger.LogError(e, $"SlashCommandExecuted failed while executing: `/{command} {subCommand}` with args: {string.Join(", ", args.Where(t => t is not null).Select(t => t.ToString()))}");
         }
     }
 }
