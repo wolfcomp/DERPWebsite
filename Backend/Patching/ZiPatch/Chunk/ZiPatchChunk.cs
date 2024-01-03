@@ -24,7 +24,7 @@ namespace PDPWebsite.Patching.ZiPatch.Chunk
 
         protected readonly ChecksumBinaryReader Reader;
 
-        private static readonly AsyncLocal<MemoryStream> localMemoryStream = new();
+        private static readonly AsyncLocal<MemoryStream> LocalMemoryStream = new();
 
 
         // Only FileHeader, ApplyOption, Sqpk, and EOF have been observed in XIVARR+ patches
@@ -46,9 +46,9 @@ namespace PDPWebsite.Patching.ZiPatch.Chunk
 
         public static ZiPatchChunk GetChunk(Stream stream)
         {
-            localMemoryStream.Value = localMemoryStream.Value ?? new MemoryStream();
+            LocalMemoryStream.Value = LocalMemoryStream.Value ?? new MemoryStream();
 
-            var memoryStream = localMemoryStream.Value;
+            var memoryStream = LocalMemoryStream.Value;
             try
             {
                 var reader = new BinaryReader(stream);

@@ -10,7 +10,7 @@ namespace PDPWebsite.Patching.ZiPatch
 {
     public class ZiPatchFile : IDisposable
     {
-        private static readonly uint[] zipatchMagic =
+        private static readonly uint[] ZipatchMagic =
         {
             0x50495A91, 0x48435441, 0x0A1A0A0D
         };
@@ -27,7 +27,7 @@ namespace PDPWebsite.Patching.ZiPatch
             _stream = stream;
 
             var reader = new BinaryReader(stream);
-            if (zipatchMagic.Any(magic => magic != reader.ReadUInt32()))
+            if (ZipatchMagic.Any(magic => magic != reader.ReadUInt32()))
                 throw new ZiPatchException();
         }
 

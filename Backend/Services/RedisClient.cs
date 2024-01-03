@@ -12,7 +12,7 @@ public class RedisClient
         _logger = logger;
     }
 
-    private static TimeSpan expireConstant = new(7, 0, 0, 0);
+    private static TimeSpan _expireConstant = new(7, 0, 0, 0);
 
     public ConnectionMultiplexer Connection { get; set; } = ConnectionMultiplexer.Connect("localhost");
 
@@ -28,7 +28,7 @@ public class RedisClient
     {
         var db = GetDatabase();
         db.StringSet(key, value);
-        db.KeyExpire(key, expire ?? DateTime.Now.Add(expireConstant));
+        db.KeyExpire(key, expire ?? DateTime.Now.Add(_expireConstant));
     }
 
     public T? GetObj<T>(string key)
