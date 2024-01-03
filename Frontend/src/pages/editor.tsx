@@ -44,6 +44,7 @@ const sanitize = (source: string | Node) => rehype()
     .processSync(DOMPurify.sanitize(source, { ADD_TAGS: ["iframe"] })).value.toString();
 
 export default function Editor() {
+    //TODO add bootstrap functions to editor with Alert, Button, Carousel, Collapse, Dropdown, Modal, Offcanvas, Popover, ScrollSpy, Tab, Toast, Tooltip
     const [markdown, setMarkdown] = useState<string>('');
     const [prevMarkdown, setPrevMarkdown] = useState<string>('');
     const [statuses, setStatuses] = useState<Status[]>([]);
