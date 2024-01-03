@@ -93,12 +93,36 @@ namespace PDPWebsite.Universalis
             var salesTmp = Sales.Select(t => new SanitizedSale(t)).GroupBy(t => t.Date);
 
             var list = salesTmp.Select(f => new ProcessedSale(f)).OrderBy(t => t.Date).ToList();
+            var timeSpan = list.Last().Date - list.First().Date;
+            var days = timeSpan.Days / 7;
+            (ITimeUnit timeUnit, int interval) unit = new (new Day(), days);
+            if (days == 0)
+            {
+                unit.timeUnit = new Hour();
+                unit.interval = (int)Math.Floor(timeSpan.TotalHours) / 12;
+            }
+
+            if (unit.interval == 0)
+            {
+                unit.interval = (int)Math.Floor(timeSpan.TotalHours) / 6;
+            }
+
+            if (unit.interval == 0)
+            {
+                unit.interval = (int)Math.Floor(timeSpan.TotalHours) / 3;
+            }
+
+            if (unit.interval == 0)
+            {
+                unit.timeUnit = new Minute();
+                unit.interval = (int)Math.Floor(timeSpan.TotalMinutes) / 30;
+            }
             list.GetSalesPlot(plt, errorBars);
-            plt.Legend();
+            plt.ShowLegend();
             plt.Title($"Average Price of {items.First(t => t.Id == ItemId)!.Name}");
             plt.YLabel("Price");
             plt.Style.Background(Color.FromHex("31363A"), Color.FromHex("3A4149"));
-            plt.XAxis.TickGenerator = new DateTimeFixedInterval(new Hour(), 3);
+            plt.XAxis.TickGenerator = new DateTimeFixedInterval(unit.timeUnit, unit.interval);
             return plt;
         }
 
@@ -231,7 +255,7 @@ namespace PDPWebsite.Universalis
         }
     }
 
-    public static partial class Extensions
+    public static class Extensions
     {
         public static double Deviation(this IEnumerable<int> values)
         {
@@ -248,42 +272,36 @@ namespace PDPWebsite.Universalis
 
         public static void GetSalesPlot(this IEnumerable<ProcessedSale> sales, Plot plt, bool errorBars)
         {
-            var avgSales = sales.ToDictionaryOrdered(sale => sale.Date.ToOADate(), sale => sale.AveragePrice);
-            var avgSalesNq = sales.Where(sale => sale.AveragePriceNq.HasValue).ToDictionaryOrdered(sale => sale.Date.ToOADate(), sale => sale.AveragePriceNq!.Value);
-            var avgSalesHq = sales.Where(sale => sale.AveragePriceHq.HasValue).ToDictionaryOrdered(sale => sale.Date.ToOADate(), sale => sale.AveragePriceHq!.Value);
-            var avg = plt.Add.Scatter(avgSales.Keys.ToArray(), avgSales.Values.ToArray(), Color.FromARGB(128 * 256 ^ 3 + 127 * 256 + 255));
+            var avgSales = sales.ToDictionaryOrdered(sale => sale.Date.ToOADate(), sale => Tuple.Create(sale.AveragePrice, sale.ErrorPrice));
+            var avgSalesNq = sales.Where(sale => sale.AveragePriceNq.HasValue).ToDictionaryOrdered(sale => sale.Date.ToOADate(), sale => Tuple.Create(sale.AveragePriceNq!.Value, sale.ErrorPriceNq!.Value));
+            var avgSalesHq = sales.Where(sale => sale.AveragePriceHq.HasValue).ToDictionaryOrdered(sale => sale.Date.ToOADate(), sale => Tuple.Create(sale.AveragePriceHq!.Value, sale.ErrorPriceHq!.Value));
+            var avgColor = new Color(128, 0, 127);
+            var avg = plt.Add.Scatter(avgSales.Keys.ToArray(), avgSales.Values.Select(t => t.Item1).ToArray(), avgColor);
             avg.Label = "Average Price";
 
-            if (avgSalesNq.Any())
-            {
-                var avgNq = plt.Add.Scatter(avgSalesNq.Keys.ToArray(), avgSalesNq.Values.ToArray(), Color.FromARGB(128 * 256 ^ 3 + 255 * 256));
-                avgNq.Label = "Average Price (NQ)";
-            }
+            if (errorBars)
+                plt.Add.ErrorBar(avgSales.Keys.ToArray(), avgSales.Values.Select(t => t.Item1).ToArray(),
+                    avgSales.Values.Select(t => t.Item2).ToArray()).Color = avgColor;
 
-            if (avgSalesHq.Any())
-            {
-                var avgHq = plt.Add.Scatter(avgSalesHq.Keys.ToArray(), avgSalesHq.Values.ToArray(), Color.FromARGB(128 * 256 ^ 3 + 255));
-                avgHq.Label = "Average Price (HQ)";
-            }
-            //
-            // var avg = plt.AddScatter(avgSales.Keys.ToArray(), avgSales.Values.ToArray(), label: "Average Price", color: Color.FromArgb(128, 0, 127, 255));
-            // if(errorBars)
-            //     avg.YError = sales.Select(sale => sale.ErrorPrice).ToArray();
-            //
             // if (avgSalesNq.Any())
             // {
-            //     var avgNq = plt.AddScatter(avgSalesNq.Keys.ToArray(), avgSalesNq.Values.ToArray(), label: "Average Price (NQ)", color: Color.FromArgb(128, 255, 0, 0));
-            //     if(errorBars)
-            //         avgNq.YError = sales.Where(sale => sale.ErrorPriceNq.HasValue).Select(sale => sale.ErrorPriceNq!.Value).ToArray();
+            //     var avgNqColor = new Color(128, 255, 0, 128);
+            //     var avgNq = plt.Add.Scatter(avgSalesNq.Keys.ToArray(), avgSalesNq.Values.Select(t => t.Item1).ToArray(), avgNqColor);
+            //     avgNq.Label = "Average Price (NQ)";
+            //     if (errorBars)
+            //         plt.Add.ErrorBar(avgSalesNq.Keys.ToArray(), avgSalesNq.Values.Select(t => t.Item1).ToArray(),
+            //             avgSalesNq.Values.Select(t => t.Item2).ToArray()).Color = avgNqColor;
             // }
             //
             // if (avgSalesHq.Any())
             // {
-            //     var avgHq = plt.AddScatter(avgSalesHq.Keys.ToArray(), avgSalesHq.Values.ToArray(), label: "Average Price (HQ)", color: Color.Gold);
-            //     if(errorBars)
-            //         avgHq.YError = sales.Where(sale => sale.ErrorPriceHq.HasValue).Select(sale => sale.ErrorPriceHq!.Value).ToArray();
+            //     var avgHqColor = new Color(255, 215, 0, 128);
+            //     var avgHq = plt.Add.Scatter(avgSalesHq.Keys.ToArray(), avgSalesHq.Values.Select(t => t.Item1).ToArray(), avgHqColor);
+            //     avgHq.Label = "Average Price (HQ)";
+            //     if (errorBars)
+            //         plt.Add.ErrorBar(avgSalesHq.Keys.ToArray(), avgSalesHq.Values.Select(t => t.Item1).ToArray(),
+            //             avgSalesHq.Values.Select(t => t.Item2).ToArray()).Color = avgHqColor;
             // }
-
         }
 
         public static double ToOADate(this DateTimeOffset date)

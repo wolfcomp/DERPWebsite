@@ -179,11 +179,16 @@ namespace PDPWebsite.Universalis
         {
             var plt = new Plot();
 
-            var data = StackSizeHistogram.Select(t => new Bar(t.Key, t.Value)).ToList();
+            var data = StackSizeHistogram.Select(t => new Bar
+            {
+                Position = t.Key,
+                Value = t.Value,
+                FillColor = Color.FromHex("228B22")
+            }).ToList();
 
             plt.Style.Background(Color.FromHex("31363A"), Color.FromHex("3A4149"));
             if (data.Count > 0)
-                plt.Add.Bar(data.ToArray(), Color.FromHex("228B22"));
+                plt.Add.Bars(data);
             plt.XLabel("Stack Size");
             plt.YLabel("Count");
             return plt;
