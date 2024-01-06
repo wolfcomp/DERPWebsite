@@ -14,6 +14,7 @@ public class Database : DbContext
     public DbSet<Expansion> Expansions { get; set; }
     public DbSet<Resource> Resources { get; set; }
     public DbSet<ResourceFile> ResourceFiles { get; set; }
+    public DbSet<Quote> Quotes { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -66,6 +67,11 @@ public class Database : DbContext
             options.HasOne(e => e.Resource)
                 .WithMany(e => e.Files)
                 .HasForeignKey(e => e.ResourceId);
+        });
+
+        modelBuilder.Entity<Quote>(options =>
+        {
+            options.HasKey(e => e.Id);
         });
     }
 }

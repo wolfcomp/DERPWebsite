@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PDPWebsite.Services;
@@ -11,9 +12,11 @@ using PDPWebsite.Services;
 namespace PDPWebsite.Migrations
 {
     [DbContext(typeof(Database))]
-    partial class DBModelSnapshot : ModelSnapshot
+    [Migration("20240105115609_AddQuote")]
+    partial class AddQuote
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -96,15 +99,12 @@ namespace PDPWebsite.Migrations
 
             modelBuilder.Entity("PDPWebsite.Models.Quote", b =>
                 {
-                    b.Property<Guid?>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<float?>("Chance")
-                        .HasColumnType("real");
-
-                    b.Property<long>("Color")
-                        .HasColumnType("bigint");
+                    b.Property<double?>("Chance")
+                        .HasColumnType("double precision");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
