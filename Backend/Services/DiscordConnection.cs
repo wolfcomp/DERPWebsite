@@ -25,6 +25,7 @@ public partial class DiscordConnection : IDisposable
     private readonly CancellationTokenSource _cts = new();
     private readonly GameClient _gameClient;
     private Type[] _slashCommandProcessors = Array.Empty<Type>();
+    private Thread _satusThread;
     private NLogLevel _logLevel = NLogLevel.Warn;
     private SocketVoiceChannel _tempVoiceChannel = null!;
     private List<Game> Games { get; } = new()
@@ -140,7 +141,8 @@ public partial class DiscordConnection : IDisposable
         if (!bool.Parse(_environmentContainer.Get("DISCORD_DISABLE")))
         {
 #pragma warning disable CS4014
-            SetActivity();
+            _satusThread = new Thread(() => SetActivity());
+            _satusThread.Start();
             CreateCommands();
             CheckVoice();
 #pragma warning restore CS4014
@@ -150,11 +152,12 @@ public partial class DiscordConnection : IDisposable
 
     public async Task DisposeAsync()
     {
+        _cts.Cancel();
+        _satusThread.Join();
         await DiscordClient.StopAsync();
         await DiscordClient.LogoutAsync();
         await DiscordClient.DisposeAsync();
         _redisClient.SetObj("discord_temp_channels", TempChannels);
-        _cts.Cancel();
     }
 
     public void Dispose()

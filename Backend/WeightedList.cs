@@ -23,7 +23,7 @@ public class WeightedList<T> : IEnumerable<T>
     /// <summary>
     /// Create a WeightedList with the provided items and an optional System.Random.
     /// </summary>
-    public WeightedList(ICollection<(T item, float weight)> listItems, Random? rand = null)
+    public WeightedList(ICollection<(T item, uint weight)> listItems, Random? rand = null)
     {
         _rand = rand ?? new Random();
         foreach (var (item, weight) in listItems)
@@ -38,14 +38,14 @@ public class WeightedList<T> : IEnumerable<T>
 
     public T Next()
     {
-        if (Count == 0) return default;
+        if (Count == 0) return default!;
         var nextInt = _rand.Next(Count);
         if (_areAllProbabilitiesIdentical) return _list[nextInt];
-        var nextProbability = _rand.Next(0, _totalWeight);
+        var nextProbability = _rand.Next();
         return (nextProbability < _probabilities[nextInt]) ? _list[nextInt] : _list[_alias[nextInt]];
     }
 
-    public void AddWeightToAll(float weight)
+    public void AddWeightToAll(uint weight)
     {
         if (weight + _minWeight <= 0 && BadWeightErrorHandling == WeightErrorHandlingType.ThrowExceptionOnAdd)
             throw new ArgumentException($"Subtracting {-1 * weight} from all items would set weight to non-positive for at least one element.");
@@ -56,26 +56,24 @@ public class WeightedList<T> : IEnumerable<T>
         Recalculate();
     }
 
-    public void SubtractWeightFromAll(float weight) => AddWeightToAll(weight * -1);
-
-    public void SetWeightOfAll(float weight)
+    public void SetWeightOfAll(uint weight)
     {
         if (weight <= 0 && BadWeightErrorHandling == WeightErrorHandlingType.ThrowExceptionOnAdd) throw new ArgumentException("Weight cannot be non-positive.");
         for (var i = 0; i < Count; i++) _weights[i] = FixWeight(weight);
         Recalculate();
     }
 
-    public float TotalWeight => _totalWeight;
+    public uint TotalWeight => _totalWeight;
 
     /// <summary>
     /// Minimum weight in the structure. 0 if Count == 0.
     /// </summary>
-    public float MinWeight => _minWeight;
+    public uint MinWeight => _minWeight;
 
     /// <summary>
     /// Maximum weight in the structure. 0 if Count == 0.
     /// </summary>
-    public float MaxWeight => _maxWeight;
+    public uint MaxWeight => _maxWeight;
 
     public IReadOnlyList<T> Items => _list.AsReadOnly();
 
@@ -83,7 +81,7 @@ public class WeightedList<T> : IEnumerable<T>
 
     IEnumerator IEnumerable.GetEnumerator() => _list.GetEnumerator();
 
-    public void Add(T item, float weight)
+    public void Add(T item, uint weight)
     {
         _list.Add(item);
         _weights.Add(FixWeight(weight));
@@ -107,11 +105,11 @@ public class WeightedList<T> : IEnumerable<T>
         Recalculate();
     }
 
-    public void Contains(T item) => _list.Contains(item);
+    public bool Contains(T item) => _list.Contains(item);
 
     public int IndexOf(T item) => _list.IndexOf(item);
 
-    public void Insert(int index, T item, int weight)
+    public void Insert(int index, T item, uint weight)
     {
         _list.Insert(index, item);
         _weights.Insert(index, FixWeight(weight));
@@ -136,17 +134,17 @@ public class WeightedList<T> : IEnumerable<T>
 
     public int Count => _list.Count;
 
-    public void SetWeight(T item, float newWeight) => SetWeightAtIndex(IndexOf(item), FixWeight(newWeight));
+    public void SetWeight(T item, uint newWeight) => SetWeightAtIndex(IndexOf(item), FixWeight(newWeight));
 
-    public float GetWeightOf(T item) => GetWeightAtIndex(IndexOf(item));
+    public uint GetWeightOf(T item) => GetWeightAtIndex(IndexOf(item));
 
-    public void SetWeightAtIndex(int index, float newWeight)
+    public void SetWeightAtIndex(int index, uint newWeight)
     {
         _weights[index] = FixWeight(newWeight);
         Recalculate();
     }
 
-    public float GetWeightAtIndex(int index) => _weights[index];
+    public uint GetWeightAtIndex(int index) => _weights[index];
 
     public override string ToString()
     {
@@ -174,14 +172,14 @@ public class WeightedList<T> : IEnumerable<T>
     }
 
     private readonly List<T> _list = new();
-    private readonly List<float> _weights = new();
-    private readonly List<float> _probabilities = new();
+    private readonly List<uint> _weights = new();
+    private readonly List<uint> _probabilities = new();
     private readonly List<int> _alias = new();
     private readonly Random _rand;
-    private float _totalWeight;
+    private uint _totalWeight;
     private bool _areAllProbabilitiesIdentical;
-    private float _minWeight;
-    private float _maxWeight;
+    private uint _minWeight;
+    private uint _maxWeight;
 
     /// <summary>
     /// https://www.keithschwarz.com/darts-dice-coins/
@@ -197,10 +195,10 @@ public class WeightedList<T> : IEnumerable<T>
         _alias.Clear(); // STEP 1
         _probabilities.Clear(); // STEP 1
 
-        var scaledProbabilityNumerator = new List<float>(Count);
+        var scaledProbabilityNumerator = new List<uint>(Count);
         var small = new List<int>(Count); // STEP 2
         var large = new List<int>(Count); // STEP 2
-        foreach (int weight in _weights)
+        foreach (uint weight in _weights)
         {
             if (isFirst)
             {
@@ -210,7 +208,7 @@ public class WeightedList<T> : IEnumerable<T>
             _minWeight = (weight < _minWeight) ? weight : _minWeight;
             _maxWeight = (_maxWeight < weight) ? weight : _maxWeight;
             _totalWeight += weight;
-            scaledProbabilityNumerator.Add(weight * Count); // STEP 3 
+            scaledProbabilityNumerator.Add(weight * (uint)Count); // STEP 3 
             _alias.Add(0);
             _probabilities.Add(0);
         }
@@ -255,25 +253,13 @@ public class WeightedList<T> : IEnumerable<T>
             large.RemoveAt(large.Count - 1);
             _probabilities[g] = _totalWeight; //6.1
         }
-
-        // STEP 7 - Can't happen for this implementation but left in source to match Keith Schwarz's algorithm
-#pragma warning disable S125 // Sections of code should not be commented out
-        //while (small.Count > 0)
-        //{
-        //    int l = small[^1]; // 7.1
-        //    small.RemoveAt(small.Count - 1);
-        //    _probabilities[l] = _totalWeight;
-        //}
-#pragma warning restore S125 // Sections of code should not be commented out
     }
 
-    // Adjust bad weights silently.
-    internal static float FixWeightSetToOne(float weight) => (weight <= 0) ? 1 : weight;
+    internal static uint FixWeightSetToOne(uint weight) => (weight <= 0) ? 1 : weight;
 
-    // Throw an exception when adding a bad weight.
-    internal static float FixWeightExceptionOnAdd(float weight) => (weight <= 0) ? throw new ArgumentException("Weight cannot be non-positive") : weight;
+    internal static uint FixWeightExceptionOnAdd(uint weight) => (weight <= 0) ? throw new ArgumentException("Weight cannot be non-positive") : weight;
 
-    private float FixWeight(float weight) => (BadWeightErrorHandling == WeightErrorHandlingType.ThrowExceptionOnAdd) ? FixWeightExceptionOnAdd(weight) : FixWeightSetToOne(weight);
+    private uint FixWeight(uint weight) => (BadWeightErrorHandling == WeightErrorHandlingType.ThrowExceptionOnAdd) ? FixWeightExceptionOnAdd(weight) : FixWeightSetToOne(weight);
 }
 
 /// <summary>
@@ -284,9 +270,9 @@ public class WeightedList<T> : IEnumerable<T>
 public readonly struct WeightedListItem<T>
 {
     internal readonly T _item;
-    internal readonly float _weight;
+    internal readonly uint _weight;
 
-    public WeightedListItem(T item, float weight)
+    public WeightedListItem(T item, uint weight)
     {
         _item = item;
         _weight = weight;
@@ -297,15 +283,4 @@ public enum WeightErrorHandlingType
 {
     SetWeightToOne, // Default
     ThrowExceptionOnAdd, // Throw exception for adding non-positive weight.
-}
-
-public static class RandomExtensions
-{
-    public static float Next(this Random rand, float minValue, float maxValue)
-    {
-        var minInt = BitConverter.SingleToInt32Bits(minValue);
-        var maxInt = BitConverter.SingleToInt32Bits(maxValue);
-        var value = rand.Next(minInt, maxInt);
-        return BitConverter.Int32BitsToSingle(value);
-    }
 }

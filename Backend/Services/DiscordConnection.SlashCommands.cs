@@ -1,9 +1,10 @@
-﻿using Discord.Net;
+using Discord.Net;
 using Discord.WebSocket;
 using Discord;
 using Newtonsoft.Json;
 using PDPWebsite.Discord;
 using System.Reflection;
+using Discord.Rest;
 
 namespace PDPWebsite.Services;
 
@@ -11,21 +12,18 @@ public partial class DiscordConnection
 {
     private async Task CreateCommands()
     {
+        var commands = new Dictionary<ulong, IReadOnlyCollection<RestGuildCommand>>();
         try
         {
             foreach (var discordClientGuild in DiscordClient.Guilds)
             {
-                var commands = await DiscordClient.Rest.GetGuildApplicationCommands(discordClientGuild.Id);
-                foreach (var restGuildCommand in commands)
-                {
-                    await restGuildCommand.DeleteAsync();
-                }
+                commands.Add(discordClientGuild.Id, await DiscordClient.Rest.GetGuildApplicationCommands(discordClientGuild.Id));
             }
         }
         catch (HttpException exception)
         {
             var json = JsonConvert.SerializeObject(exception.Errors, Formatting.Indented);
-            await Log(new LogMessage(LogSeverity.Error, "UniversalisBot", json, exception));
+            _logger.LogError(exception, json);
         }
 
         _slashCommandProcessors = Assembly.GetExecutingAssembly().GetTypes().Where(t => t.GetInterfaces().Any(x => x == typeof(ISlashCommandProcessor)) && t.IsClass).ToArray();
@@ -34,10 +32,10 @@ public partial class DiscordConnection
 
         foreach (var slashCommandProcessor in _slashCommandProcessors)
         {
-            var slashCommandBuiler = new SlashCommandBuilder();
-            slashCommandBuiler.WithName(slashCommandProcessor.Name.SanitizeName());
+            var slashCommandBuilder = new SlashCommandBuilder();
+            slashCommandBuilder.WithName(slashCommandProcessor.Name.SanitizeName());
             var slashCommand = slashCommandProcessor.GetCustomAttribute<SlashCommandAttribute>();
-            slashCommand?.SetBuilder(slashCommandBuiler);
+            slashCommand?.SetBuilder(slashCommandBuilder);
             var methods = slashCommandProcessor.GetMethods();
             foreach (var methodInfo in methods)
             {
@@ -48,14 +46,15 @@ public partial class DiscordConnection
                 slashCommandOptionBuilder.WithType(ApplicationCommandOptionType.SubCommand);
                 slashCommandOptionBuilder.WithName(methodInfo.Name.SanitizeName());
                 slashCommandAttribute?.SetBuilder(slashCommandOptionBuilder);
-                foreach (var parameterInfo in methodInfo.GetParameters())
+                var parameters = methodInfo.GetParameters();
+                foreach (var parameterInfo in parameters)
                 {
                     var slashCommandParamBuilder = new SlashCommandOptionBuilder();
                     var slashCommandParamAttribute = parameterInfo.GetCustomAttribute<SlashCommandAttribute>();
                     slashCommandParamBuilder.WithName(parameterInfo.Name!.SanitizeName());
                     slashCommandParamAttribute?.SetBuilder(slashCommandParamBuilder);
-                    var required = Nullable.GetUnderlyingType(parameterInfo.ParameterType) == null;
-                    var paramType = required ? parameterInfo.ParameterType : Nullable.GetUnderlyingType(parameterInfo.ParameterType)!;
+                    var required = Nullable.GetUnderlyingType(parameterInfo.ParameterType) == null && !parameterInfo.Attributes.HasFlag(ParameterAttributes.Optional);
+                    var paramType = Nullable.GetUnderlyingType(parameterInfo.ParameterType) ?? parameterInfo.ParameterType;
                     var slashCommandOptionType = paramType switch
                     {
                         { IsEnum: true } => ApplicationCommandOptionType.Integer,
@@ -79,6 +78,7 @@ public partial class DiscordConnection
                         { } t when t == typeof(SocketUser) => ApplicationCommandOptionType.User,
                         { } t when t == typeof(SocketChannel) => ApplicationCommandOptionType.Channel,
                         { } t when t == typeof(Attachment) => ApplicationCommandOptionType.Attachment,
+                        { } t when t == typeof(Guid) => ApplicationCommandOptionType.String,
                         _ => throw new ArgumentOutOfRangeException(nameof(paramType), paramType, $"Could not match type with {paramType.Name}")
                     };
                     if (paramType.IsEnum)
@@ -99,9 +99,9 @@ public partial class DiscordConnection
                     slashCommandParamBuilder.WithRequired(required);
                     slashCommandOptionBuilder.AddOption(slashCommandParamBuilder);
                 }
-                slashCommandBuiler.AddOption(slashCommandOptionBuilder);
+                slashCommandBuilder.AddOption(slashCommandOptionBuilder);
             }
-            commandBuilders.Add(slashCommandBuiler);
+            commandBuilders.Add(slashCommandBuilder);
         enumEscape:;
         }
 
@@ -109,16 +109,27 @@ public partial class DiscordConnection
         {
             foreach (var discordClientGuild in DiscordClient.Guilds)
             {
+                var guildCommands = commands[discordClientGuild.Id].ToList();
                 foreach (var commandBuilder in commandBuilders)
                 {
+                    var command = commandBuilder.Build();
+                    if (guildCommands.Any(t => t.Name == command.Name.Value))
+                    {
+                        guildCommands.Remove(guildCommands.First(t => t.Name == command.Name.Value));
+                    }
                     await DiscordClient.Rest.CreateGuildCommand(commandBuilder.Build(), discordClientGuild.Id);
+                }
+
+                foreach (var guildCommand in guildCommands)
+                {
+                    await guildCommand.DeleteAsync();
                 }
             }
         }
         catch (HttpException exception)
         {
             var json = JsonConvert.SerializeObject(exception.Errors, Formatting.Indented);
-            await Log(new LogMessage(LogSeverity.Error, "UniversalisBot", json, exception));
+            _logger.LogError(exception, json);
         }
     }
 
@@ -138,7 +149,16 @@ public partial class DiscordConnection
             await arg.RespondAsync($"This command can only be used in the following channels: {string.Join(", ", channels.Select(t => $"<#{t}>"))}", ephemeral: true);
             return;
         }
-        var instance = ActivatorUtilities.CreateInstance(_provider, type, arg, _gameClient);
+
+        object instance;
+        try
+        {
+            instance = ActivatorUtilities.CreateInstance(_provider, type, arg, _gameClient);
+        }
+        catch
+        {
+            instance = ActivatorUtilities.CreateInstance(_provider, type, arg);
+        }
         var method = type.GetMethods().FirstOrDefault(t => t.IsSameCommand(subCommand!));
         if (method == null)
         {
@@ -172,9 +192,9 @@ public partial class DiscordConnection
                             _ when typeSafe == typeof(ushort) => Convert.ToUInt16(paramOption.Value),
                             _ when typeSafe == typeof(byte) => Convert.ToByte(paramOption.Value),
                             _ when typeSafe == typeof(sbyte) => Convert.ToSByte(paramOption.Value),
-                            _ when typeSafe == typeof(double) => paramOption.Value,
-                            _ when typeSafe == typeof(float) => paramOption.Value,
-                            _ when typeSafe == typeof(decimal) => paramOption.Value,
+                            _ when typeSafe == typeof(double) => double.Parse(paramOption.Value.ToString()!),
+                            _ when typeSafe == typeof(float) => float.Parse(paramOption.Value.ToString()!),
+                            _ when typeSafe == typeof(decimal) => decimal.Parse(paramOption.Value.ToString()!),
                             _ when typeSafe == typeof(DateTime) => DateTime.Parse((string)paramOption.Value),
                             _ when typeSafe == typeof(DateTimeOffset) => DateTimeOffset.Parse((string)paramOption.Value),
                             _ when typeSafe == typeof(TimeSpan) => TimeSpan.Parse((string)paramOption.Value),
@@ -182,6 +202,7 @@ public partial class DiscordConnection
                             _ when typeSafe == typeof(SocketUser) => paramOption.Value,
                             _ when typeSafe == typeof(SocketChannel) => paramOption.Value,
                             _ when typeSafe == typeof(Attachment) => paramOption.Value,
+                            _ when typeSafe == typeof(Guid) => Guid.Parse((string)paramOption.Value),
                             _ => throw new ArgumentOutOfRangeException(nameof(typeSafe), typeSafe, $"Could not match type with {typeSafe.Name}")
                         })!);
                     }

@@ -62,6 +62,7 @@ public class ResourcesController : ControllerBase
             }
             _database.Database.ExecuteSqlRaw(@"UPDATE ""Resources"" SET ""ExpansionId"" = {0}, ""CategoryId"" = {1}, ""HtmlContent"" = {2}, ""MarkdownContent"" = {3}, ""PageName"" = {4}, ""Published"" = {5} WHERE ""Id"" = {6}", resourceHttp.ExpansionId ?? resource.ExpansionId, resourceHttp.CategoryId ?? resource.CategoryId, resourceHttp.HtmlContent ?? resource.HtmlContent, resourceHttp.MarkdownContent ?? resource.MarkdownContent, resourceHttp.PageName ?? resource.PageName, resourceHttp.Publish ?? resource.Published, resourceHttp.Id);
         }
+        _database.ChangeTracker.Clear();
         _database.SaveChanges();
         resource = _database.Resources.Include(resource1 => resource1.Category).Include(resource1 => resource1.Expansion).First(t => t.Id == resource.Id);
         return Ok(new
