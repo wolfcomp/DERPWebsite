@@ -30,6 +30,16 @@ public class GameClient : IDisposable
 #else
         _gameDataPath = Path.Combine(AppContext.BaseDirectory, "ffxiv", "sqpack");
 #endif
+        _patchInstaller = new PatchInstaller(provider.GetRequiredService<ILogger<PatchInstaller>>());
+        _logger = logger;
+        _client = client;
+
+        if (!Directory.Exists(_gameDataPath))
+        {
+            _logger.LogWarning("Could not find game files downloading");
+
+        }
+
         _gameData = new GameData(_gameDataPath)
         {
             Options =
@@ -37,9 +47,6 @@ public class GameClient : IDisposable
                 PanicOnSheetChecksumMismatch = false
             }
         };
-        _logger = logger;
-        _client = client;
-        _patchInstaller = new PatchInstaller(provider.GetRequiredService<ILogger<PatchInstaller>>());
         LoadMarket().GetAwaiter().GetResult();
     }
 
@@ -96,30 +103,17 @@ public class GameClient : IDisposable
                 t.Content = null;
                 t.Embed = builder.Build();
             });
-            var updateTask = _patchInstaller.Update();
-            while (!updateTask.IsCompleted)
+            var updateTask = UpdateInternal(async str =>
             {
-                await Task.Delay(TimeSpan.FromSeconds(5));
-                var sb = new StringBuilder();
-                if (_patchInstaller.DownloadProgress.Any())
-                {
-                    sb.AppendLine("Download progress:");
-                    foreach (var (_, download) in _patchInstaller.DownloadProgress.ToImmutableDictionary())
-                    {
-                        var (desc, ver, progress) = download;
-                        sb.AppendLine($"{desc} - {ver}\n{progress:P}");
-                    }
-                }
-
-                {
-                    if (sb.Length > 0) sb.AppendLine();
-                    sb.AppendLine("Install progress:");
-                    var (desc, ver, goalVer, progress, fileProgress) = _patchInstaller.CurrentInstallProgress;
-                    sb.AppendLine($"{desc} - {ver} {fileProgress:P} -> {goalVer}\n{progress:P}");
-                    builder.WithDescription(sb.ToString());
-                }
+                builder.WithDescription(str);
                 await message.ModifyAsync(msg => { msg.Embed = builder.Build(); });
-            }
+            }, (e, str) =>
+            {
+                if (e != null)
+                    _logger.LogError(e, str);
+                else
+                    _logger.LogError(str);
+            });
 
             if (updateTask.IsFaulted)
             {
@@ -143,6 +137,33 @@ public class GameClient : IDisposable
             });
         });
         _updateThread.Start();
+    }
+
+    private async Task UpdateInternal(Action<string> pout, Action<Exception?, string> perr)
+    {
+        var updateTask = _patchInstaller.Update();
+        while (!updateTask.IsCompleted)
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(500));
+            var sb = new StringBuilder();
+            if (_patchInstaller.DownloadProgress.Any())
+            {
+                sb.AppendLine("Download progress:");
+                foreach (var (_, download) in _patchInstaller.DownloadProgress.ToImmutableDictionary())
+                {
+                    var (desc, ver, progress) = download;
+                    sb.AppendLine($"{desc} - {ver}\n{progress:P}");
+                }
+            }
+
+            {
+                if (sb.Length > 0) sb.AppendLine();
+                sb.AppendLine("Install progress:");
+                var (desc, ver, goalVer, progress, chunkProgress, fileProgress) = _patchInstaller.CurrentInstallProgress;
+                sb.AppendLine($"{desc} - {ver} {chunkProgress:P} {fileProgress:P} -> {goalVer}\n{progress:P}");
+            }
+            pout(sb.ToString());
+        }
     }
 
     public Task<List<Tuple<string, string, string, string>>> CheckVersions() => _patchInstaller.CheckVersions();

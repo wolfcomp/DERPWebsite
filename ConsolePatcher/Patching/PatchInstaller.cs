@@ -9,6 +9,7 @@ using System.Net;
 using GraphQL;
 using GraphQL.Client.Http;
 using GraphQL.Client.Serializer.SystemTextJson;
+using Microsoft.Extensions.Logging;
 using PDPWebsite.Patching.ZiPatch;
 using PDPWebsite.Patching.ZiPatch.Chunk;
 using PDPWebsite.Patching.ZiPatch.Util;
@@ -98,6 +99,7 @@ query($repoId:String) {
 #else
             verPath = Path.Combine(AppContext.BaseDirectory, "ffxiv", verPath);
 #endif
+            var verFileInfo = new FileInfo(verPath);
             _logger.LogInformation($"Checking update for {slug}");
             if (curVer == discoveredVer)
             {
@@ -170,7 +172,8 @@ query($repoId:String) {
                     CurrentInstallProgress = (description, versionString, discoveredVer, patchIndex / (float)downloadTasks.Count, 0, 0);
                     _logger.LogInformation($"Installing {versionString} for {slug}");
                     InstallPatch(fileInfo.FullName, gamePath);
-                    await File.WriteAllTextAsync(verPath, versionString);
+                    if(Directory.Exists(verFileInfo.Directory!.FullName))
+                        await File.WriteAllTextAsync(verPath, versionString);
                     patchIndex++;
                 }
             });
