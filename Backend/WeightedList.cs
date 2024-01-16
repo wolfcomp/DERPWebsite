@@ -17,7 +17,7 @@ public class WeightedList<T> : IEnumerable<T>
     /// <param name="rand"></param>
     public WeightedList(Random? rand = null)
     {
-        _rand = rand ?? new Random();
+        _rand = rand ?? _rand;
     }
 
     /// <summary>
@@ -25,7 +25,7 @@ public class WeightedList<T> : IEnumerable<T>
     /// </summary>
     public WeightedList(ICollection<(T item, uint weight)> listItems, Random? rand = null)
     {
-        _rand = rand ?? new Random();
+        _rand = rand ?? _rand;
         foreach (var (item, weight) in listItems)
         {
             _list.Add(item);
@@ -41,7 +41,7 @@ public class WeightedList<T> : IEnumerable<T>
         if (Count == 0) return default!;
         var nextInt = _rand.Next(Count);
         if (_areAllProbabilitiesIdentical) return _list[nextInt];
-        var nextProbability = _rand.Next();
+        var nextProbability = _rand.Next(_totalWeight);
         return (nextProbability < _probabilities[nextInt]) ? _list[nextInt] : _list[_alias[nextInt]];
     }
 
@@ -175,7 +175,7 @@ public class WeightedList<T> : IEnumerable<T>
     private readonly List<uint> _weights = new();
     private readonly List<uint> _probabilities = new();
     private readonly List<int> _alias = new();
-    private readonly Random _rand;
+    private static Random _rand = new();
     private uint _totalWeight;
     private bool _areAllProbabilitiesIdentical;
     private uint _minWeight;
@@ -283,4 +283,9 @@ public enum WeightErrorHandlingType
 {
     SetWeightToOne, // Default
     ThrowExceptionOnAdd, // Throw exception for adding non-positive weight.
+}
+
+public static class WeightedListExtensions
+{
+    public static uint Next(this Random rand, uint max) => (uint)rand.Next((int)max);
 }
