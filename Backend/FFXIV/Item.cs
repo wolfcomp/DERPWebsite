@@ -34,7 +34,7 @@ public class Item
         {
             var ptr = (nint)p;
             var bmp = new SKBitmap();
-            bmp.InstallPixels(new SKImageInfo(texFile.Header.Width, texFile.Header.Height, RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? SKColorType.Bgra8888 : SKColorType.Rgba8888), ptr, texFile.Header.Width * 4);
+            bmp.InstallPixels(new SKImageInfo(texFile.Header.Width, texFile.Header.Height, SKColorType.Bgra8888), ptr, texFile.Header.Width * 4);
             return bmp;
         }
     }

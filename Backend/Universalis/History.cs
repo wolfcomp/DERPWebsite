@@ -122,7 +122,7 @@ namespace PDPWebsite.Universalis
             plt.Title($"Average Price of {items.First(t => t.Id == ItemId)!.Name}");
             plt.YLabel("Price");
             plt.Style.Background(Color.FromHex("31363A"), Color.FromHex("3A4149"));
-            plt.XAxis.TickGenerator = new DateTimeFixedInterval(unit.timeUnit, unit.interval);
+            plt.Axes.Bottom.TickGenerator = new DateTimeFixedInterval(unit.timeUnit, unit.interval);
             return plt;
         }
 
