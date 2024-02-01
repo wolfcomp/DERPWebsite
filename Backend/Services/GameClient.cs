@@ -73,6 +73,7 @@ public class GameClient : IDisposable
     public TexFile? GetTexFile(string path) => _gameData.GetFile<TexFile>(path);
 
     public ExcelSheet<T>? GetSheet<T>() where T : ExcelRow => _gameData.GetExcelSheet<T>();
+    public ExcelSheet<T>? GetSheet<T>(Language language) where T : ExcelRow => _gameData.GetExcelSheet<T>(language);
 
     public Task RefreshGameData()
     {

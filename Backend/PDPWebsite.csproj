@@ -48,4 +48,8 @@
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.5.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\NetStone\NetStone\NetStone.csproj" />
+  </ItemGroup>
+
 </Project>

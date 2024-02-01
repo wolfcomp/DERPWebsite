@@ -3,9 +3,11 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.OpenApi.Models;
+using NetStone;
 using NLog.Web;
 using PDPWebsite;
 using PDPWebsite.Hubs;
+using PDPWebsite.Lodestone;
 
 var logger = LogManager.Setup().SetupExtensions(ext => ext.RegisterTarget<DiscordLogger>()).LoadConfigurationFromAppSettings().GetCurrentClassLogger();
 logger.Info("Starting up");
@@ -29,6 +31,10 @@ builder.Services.AddSingleton<UniversalisClient>();
 builder.Services.AddSingleton<GameClient>();
 builder.Services.AddSingleton<DiscordConnection>();
 builder.Services.AddSingleton<RedisClient>();
+builder.Services.AddSingleton<LodestoneGameClient>();
+builder.Services.AddSingleton(provider =>
+    LodestoneClient.GetClientAsync(provider.GetRequiredService<LodestoneGameClient>()).ConfigureAwait(false)
+        .GetAwaiter().GetResult());
 builder.Services.AddScoped<AuthFilter>();
 builder.Services.AddDbContext<Database>(conf => conf.UseNpgsql("Database=pdp;Username=postgres;Password=postgres;Host=localhost;"));
 builder.Services.AddSwaggerGen(c =>
