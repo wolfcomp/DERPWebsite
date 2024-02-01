@@ -4,13 +4,11 @@
  */
 
 using System.Collections.Concurrent;
-using System.IO;
 using System.Net;
 using GraphQL;
 using GraphQL.Client.Http;
 using GraphQL.Client.Serializer.SystemTextJson;
 using PDPWebsite.Patching.ZiPatch;
-using PDPWebsite.Patching.ZiPatch.Chunk;
 using PDPWebsite.Patching.ZiPatch.Util;
 
 namespace PDPWebsite.Patching;

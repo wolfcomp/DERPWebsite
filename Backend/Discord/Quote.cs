@@ -1,7 +1,6 @@
 ﻿using System.Globalization;
 using Discord;
 using Discord.WebSocket;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace PDPWebsite.Discord;
 

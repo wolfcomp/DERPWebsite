@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json;
 using ScottPlot;
-using ScottPlot.Plottables;
 using Color = ScottPlot.Color;
 
 namespace PDPWebsite.Universalis
