@@ -25,6 +25,6 @@ public record AboutInfoExtended(ulong Id, string Description, string RoleName, s
 
     public static AboutInfoExtended FromInfo(AboutInfo aboutInfo, SocketGuildUser user, SocketRole role)
     {
-        return new AboutInfoExtended(aboutInfo.Id, aboutInfo.Description, role.Name, role.Color.ToString()!, user.GetAvatarUrl(), user.DisplayName, aboutInfo.VisualName);
+        return new AboutInfoExtended(aboutInfo.Id, aboutInfo.Description, role.Name, role.Color.ToString()!, user.GetDisplayAvatarUrl(), user.DisplayName, aboutInfo.VisualName);
     }
 }
