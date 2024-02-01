@@ -26,6 +26,7 @@ import { Category, Expansion, Resource, ResourceFile } from "../structs/resource
 import "./editor.scss";
 import "highlight.js/styles/monokai-sublime.css";
 import { useNavigate, useParams } from "react-router-dom";
+import { Carousel, Collapse, Dropdown, Modal, Offcanvas, Popover, ScrollSpy, Tab, Toast, Tooltip } from "bootstrap";
 
 const sanitize = (source: string | Node) => rehype()
     .use(rehypeMinifyAttributeWhitespace)
@@ -44,7 +45,6 @@ const sanitize = (source: string | Node) => rehype()
     .processSync(DOMPurify.sanitize(source, { ADD_TAGS: ["iframe"] })).value.toString();
 
 export default function Editor() {
-    //TODO add bootstrap functions to editor with Alert, Button, Carousel, Collapse, Dropdown, Modal, Offcanvas, Popover, ScrollSpy, Tab, Toast, Tooltip
     const [markdown, setMarkdown] = useState<string>('');
     const [prevMarkdown, setPrevMarkdown] = useState<string>('');
     const [statuses, setStatuses] = useState<Status[]>([]);
@@ -109,6 +109,46 @@ export default function Editor() {
             divRef.current.querySelectorAll("pre code").forEach((el) => {
                 const el2 = el as HTMLElement;
                 hljs.highlightElement(el2);
+            });
+            divRef.current.querySelectorAll(".carousel").forEach((el) => {
+                const el2 = el as HTMLElement;
+                new Carousel(el2);
+            });
+            divRef.current.querySelectorAll(".collapse").forEach((el) => {
+                const el2 = el as HTMLElement;
+                new Collapse(el2);
+            });
+            divRef.current.querySelectorAll(".dropdown-toggle").forEach((el) => {
+                const el2 = el as HTMLElement;
+                new Dropdown(el2);
+            });
+            divRef.current.querySelectorAll(".modal").forEach((el) => {
+                const el2 = el as HTMLElement;
+                new Modal(el2);
+            });
+            divRef.current.querySelectorAll(".offcanvas").forEach((el) => {
+                const el2 = el as HTMLElement;
+                new Offcanvas(el2);
+            });
+            divRef.current.querySelectorAll(".popover").forEach((el) => {
+                const el2 = el as HTMLElement;
+                new Popover(el2);
+            });
+            divRef.current.querySelectorAll(".scrollspy").forEach((el) => {
+                const el2 = el as HTMLElement;
+                new ScrollSpy(el2);
+            });
+            divRef.current.querySelectorAll(".tab-pane").forEach((el) => {
+                const el2 = el as HTMLElement;
+                new Tab(el2);
+            });
+            divRef.current.querySelectorAll(".toast").forEach((el) => {
+                const el2 = el as HTMLElement;
+                new Toast(el2);
+            });
+            divRef.current.querySelectorAll(".tooltip").forEach((el) => {
+                const el2 = el as HTMLElement;
+                new Tooltip(el2);
             });
         }
     }, [prevMarkdown]);

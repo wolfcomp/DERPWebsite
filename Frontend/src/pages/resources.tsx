@@ -6,6 +6,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import hljs from "highlight.js";
 import "highlight.js/styles/monokai-sublime.css";
 import { useToast } from "../components/toast";
+import { Carousel, Collapse, Dropdown, Modal, Offcanvas, Popover, ScrollSpy, Tab, Toast, Tooltip } from "bootstrap";
 
 export default function Resources() {
     const [resources, setResources] = useState<Resource[]>([]);
@@ -259,7 +260,7 @@ function ResourceItem({ resource, onDelete, onPublish, onView }: { resource: Res
             {!resource.published && <h4 className="d-flex align-items-center m-0 mt-auto mb-auto" onClick={onView} style={{ cursor: "pointer", flexGrow: 1 }}>{resource.pageName} <span className="ms-2" style={{ fontSize: "0.75rem", fontStyle: "italic" }}>Not published</span></h4>}
             <div>
                 {auth.user && <button className="btn btn-primary me-2" onClick={() => {
-                    navigate(`/editor#id=${resource.id}`);
+                    navigate(`/editor/${resource.id}`);
                 }}>Edit</button>}
                 {auth.user && <button className="btn btn-danger me-2" onClick={onDelete}>Delete</button>}
                 {auth.user && !resource.published && <button className="btn btn-primary" onClick={onPublish}>Publish</button>}
@@ -310,6 +311,46 @@ function ResourceRender({ resource }: { resource: Resource }) {
             divRef.current.querySelectorAll("pre code").forEach((el) => {
                 const el2 = el as HTMLElement;
                 hljs.highlightElement(el2);
+            });
+            divRef.current.querySelectorAll(".carousel").forEach((el) => {
+                const el2 = el as HTMLElement;
+                new Carousel(el2);
+            });
+            divRef.current.querySelectorAll(".collapse").forEach((el) => {
+                const el2 = el as HTMLElement;
+                new Collapse(el2);
+            });
+            divRef.current.querySelectorAll(".dropdown-toggle").forEach((el) => {
+                const el2 = el as HTMLElement;
+                new Dropdown(el2);
+            });
+            divRef.current.querySelectorAll(".modal").forEach((el) => {
+                const el2 = el as HTMLElement;
+                new Modal(el2);
+            });
+            divRef.current.querySelectorAll(".offcanvas").forEach((el) => {
+                const el2 = el as HTMLElement;
+                new Offcanvas(el2);
+            });
+            divRef.current.querySelectorAll(".popover").forEach((el) => {
+                const el2 = el as HTMLElement;
+                new Popover(el2);
+            });
+            divRef.current.querySelectorAll(".scrollspy").forEach((el) => {
+                const el2 = el as HTMLElement;
+                new ScrollSpy(el2);
+            });
+            divRef.current.querySelectorAll(".tab-pane").forEach((el) => {
+                const el2 = el as HTMLElement;
+                new Tab(el2);
+            });
+            divRef.current.querySelectorAll(".toast").forEach((el) => {
+                const el2 = el as HTMLElement;
+                new Toast(el2);
+            });
+            divRef.current.querySelectorAll(".tooltip").forEach((el) => {
+                const el2 = el as HTMLElement;
+                new Tooltip(el2);
             });
         }
     }, [resource]);
