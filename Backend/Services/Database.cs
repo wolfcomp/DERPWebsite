@@ -11,7 +11,7 @@ public class Database : DbContext
     public DbSet<SignUp> Signups { get; set; }
     public DbSet<AboutInfo> AboutInfos { get; set; }
     public DbSet<Category> Categories { get; set; }
-    public DbSet<Expansion> Expansions { get; set; }
+    public DbSet<Tier> Tiers { get; set; }
     public DbSet<Resource> Resources { get; set; }
     public DbSet<ResourceFile> ResourceFiles { get; set; }
     public DbSet<Quote> Quotes { get; set; }
@@ -46,13 +46,13 @@ public class Database : DbContext
                 .HasForeignKey(e => e.CategoryId);
         });
 
-        modelBuilder.Entity<Expansion>(options =>
+        modelBuilder.Entity<Tier>(options =>
         {
             options.HasKey(e => e.Id);
 
             options.HasMany(e => e.Resources)
-                .WithOne(e => e.Expansion)
-                .HasForeignKey(e => e.ExpansionId);
+                .WithOne(e => e.Tier)
+                .HasForeignKey(e => e.TierId);
         });
 
         modelBuilder.Entity<Resource>(options =>

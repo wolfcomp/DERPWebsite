@@ -25,11 +25,11 @@ public class ResourcesController : ControllerBase
     [SwaggerResponse(StatusCodes.Status500InternalServerError, "Internal server error", typeof(string))]
     public IActionResult GetResources()
     {
-        return Ok(_database.Resources.Include(resource => resource.Category).Include(resource => resource.Expansion).Select(resource => new
+        return Ok(_database.Resources.Include(resource => resource.Category).Include(resource => resource.Tier).Select(resource => new
         {
             resource.Id,
-            Category = new { resource.Category.Id, resource.Category.Name, resource.Category.Description, resource.Category.IconUrl },
-            Expansion = new { resource.Expansion.Id, resource.Expansion.Name, resource.Expansion.Description, resource.Expansion.IconUrl },
+            Category = new { resource.Category.Id, resource.Category.Name, resource.Category.Description, resource.Category.IconUrl, resource.Category.HasTiers },
+            Tier = new { resource.Tier.Id, resource.Tier.Name, resource.Tier.IconUrl },
             resource.PageName,
             resource.Published
         }));
@@ -55,21 +55,21 @@ public class ResourcesController : ControllerBase
         }
         else
         {
-            resource = _database.Resources.Include(resource1 => resource1.Category).Include(resource1 => resource1.Expansion).FirstOrDefault(t => t.Id == resourceHttp.Id);
+            resource = _database.Resources.Include(resource1 => resource1.Category).Include(resource1 => resource1.Tier).FirstOrDefault(t => t.Id == resourceHttp.Id);
             if (resource is null)
             {
                 return Problem();
             }
-            _database.Database.ExecuteSqlRaw(@"UPDATE ""Resources"" SET ""ExpansionId"" = {0}, ""CategoryId"" = {1}, ""HtmlContent"" = {2}, ""MarkdownContent"" = {3}, ""PageName"" = {4}, ""Published"" = {5} WHERE ""Id"" = {6}", resourceHttp.ExpansionId ?? resource.ExpansionId, resourceHttp.CategoryId ?? resource.CategoryId, resourceHttp.HtmlContent ?? resource.HtmlContent, resourceHttp.MarkdownContent ?? resource.MarkdownContent, resourceHttp.PageName ?? resource.PageName, resourceHttp.Publish ?? resource.Published, resourceHttp.Id);
+            _database.Database.ExecuteSqlRaw(@"UPDATE ""Resources"" SET ""ExpansionId"" = {0}, ""CategoryId"" = {1}, ""HtmlContent"" = {2}, ""MarkdownContent"" = {3}, ""PageName"" = {4}, ""Published"" = {5} WHERE ""Id"" = {6}", resourceHttp.TierId ?? resource.TierId, resourceHttp.CategoryId ?? resource.CategoryId, resourceHttp.HtmlContent ?? resource.HtmlContent, resourceHttp.MarkdownContent ?? resource.MarkdownContent, resourceHttp.PageName ?? resource.PageName, resourceHttp.Publish ?? resource.Published, resourceHttp.Id);
         }
         _database.ChangeTracker.Clear();
         _database.SaveChanges();
-        resource = _database.Resources.Include(resource1 => resource1.Category).Include(resource1 => resource1.Expansion).First(t => t.Id == resource.Id);
+        resource = _database.Resources.Include(resource1 => resource1.Category).Include(resource1 => resource1.Tier).First(t => t.Id == resource.Id);
         return Ok(new
         {
             resource.Id,
-            Category = new { resource.Category.Id, resource.Category.Name, resource.Category.Description, resource.Category.IconUrl },
-            Expansion = new { resource.Expansion.Id, resource.Expansion.Name, resource.Expansion.Description, resource.Expansion.IconUrl },
+            Category = new { resource.Category.Id, resource.Category.Name, resource.Category.Description, resource.Category.IconUrl, resource.Category.HasTiers },
+            Tier = new { resource.Tier.Id, resource.Tier.Name, resource.Tier.IconUrl },
             resource.PageName,
             resource.Published,
             resource.HtmlContent,
@@ -105,7 +105,7 @@ public class ResourcesController : ControllerBase
     [SwaggerResponse(StatusCodes.Status500InternalServerError, "Internal server error", typeof(string))]
     public IActionResult GetResource(Guid id)
     {
-        var resource = _database.Resources.Include(resource => resource.Category).Include(resource => resource.Expansion).FirstOrDefault(t => t.Id == id);
+        var resource = _database.Resources.Include(resource => resource.Category).Include(resource => resource.Tier).FirstOrDefault(t => t.Id == id);
         if (resource is null)
         {
             return NotFound();
@@ -113,8 +113,8 @@ public class ResourcesController : ControllerBase
         return Ok(new
         {
             resource.Id,
-            Category = new { resource.Category.Id, resource.Category.Name, resource.Category.Description, resource.Category.IconUrl },
-            Expansion = new { resource.Expansion.Id, resource.Expansion.Name, resource.Expansion.Description, resource.Expansion.IconUrl },
+            Category = new { resource.Category.Id, resource.Category.Name, resource.Category.Description, resource.Category.IconUrl, resource.Category.HasTiers },
+            Tier = new { resource.Tier.Id, resource.Tier.Name, resource.Tier.IconUrl },
             resource.PageName,
             resource.HtmlContent,
             resource.MarkdownContent
@@ -144,17 +144,17 @@ public class ResourcesController : ControllerBase
     [SwaggerResponse(StatusCodes.Status500InternalServerError, "Internal server error", typeof(string))]
     public IActionResult GetCategories()
     {
-        return Ok(_database.Categories.Select(t => new { t.Id, t.Name, t.Description, t.IconUrl }));
+        return Ok(_database.Categories.Select(t => new { t.Id, t.Name, t.Description, t.IconUrl, t.HasTiers }));
     }
 
     [HttpGet]
-    [Route("expansions")]
-    [SwaggerOperation("Gets all expansions")]
-    [SwaggerResponse(StatusCodes.Status200OK, "Returns if successful", typeof(IEnumerable<Expansion>))]
+    [Route("tiers")]
+    [SwaggerOperation("Gets all tiers")]
+    [SwaggerResponse(StatusCodes.Status200OK, "Returns if successful", typeof(IEnumerable<Tier>))]
     [SwaggerResponse(StatusCodes.Status500InternalServerError, "Internal server error", typeof(string))]
-    public IActionResult GetExpansions()
+    public IActionResult GetTiers()
     {
-        return Ok(_database.Expansions.Select(t => new { t.Id, t.Name, t.Description, t.IconUrl }));
+        return Ok(_database.Tiers.Select(t => new { t.Id, t.Name, t.IconUrl }));
     }
 
     [HttpPost]
@@ -169,16 +169,16 @@ public class ResourcesController : ControllerBase
     public IActionResult UploadFile([FromForm] FileUpload upload)
     {
         var fileId = Guid.NewGuid().ToString();
-        var resource = _database.Resources.Include(t => t.Category).Include(t => t.Expansion).FirstOrDefault(t => t.Id == upload.Id);
+        var resource = _database.Resources.Include(t => t.Category).Include(t => t.Tier).FirstOrDefault(t => t.Id == upload.Id);
         if (resource is null)
         {
             return NotFound("Could not find connected resource. Have you saved a draft yet?");
         }
         var file = upload.File;
-        var path = Path.Combine(resource.Expansion.Path, resource.Category.Path, fileId);
-        if (!Directory.Exists(Path.Combine(_environmentContainer.Get("EDITOR_RESOURCE_PATH"), resource.Expansion.Path, resource.Category.Path)))
+        var path = Path.Combine(resource.Tier.Path, resource.Category.Path, fileId);
+        if (!Directory.Exists(Path.Combine(_environmentContainer.Get("EDITOR_RESOURCE_PATH"), resource.Tier.Path, resource.Category.Path)))
         {
-            Directory.CreateDirectory(Path.Combine(_environmentContainer.Get("EDITOR_RESOURCE_PATH"), resource.Expansion.Path, resource.Category.Path));
+            Directory.CreateDirectory(Path.Combine(_environmentContainer.Get("EDITOR_RESOURCE_PATH"), resource.Tier.Path, resource.Category.Path));
         }
         var stream = new FileStream(Path.Combine(_environmentContainer.Get("EDITOR_RESOURCE_PATH"), path), FileMode.Create);
         file.CopyTo(stream);
@@ -267,16 +267,16 @@ public class ResourcesController : ControllerBase
     }
 }
 
-public record ResourceHttp(Guid? Id, Guid? CategoryId, Guid? ExpansionId, string? HtmlContent, string? MarkdownContent, string? PageName, bool? Publish)
+public record ResourceHttp(Guid? Id, Guid? CategoryId, Guid? TierId, string? HtmlContent, string? MarkdownContent, string? PageName, bool? Publish)
 {
     public Resource GetResource(ulong hostId)
     {
-        return new Resource(Id, CategoryId ?? Guid.Empty, ExpansionId ?? Guid.Empty, HtmlContent ?? "", MarkdownContent ?? "", PageName ?? "", hostId, Publish ?? false);
+        return new Resource(Id, CategoryId ?? Guid.Empty, TierId ?? Guid.Empty, HtmlContent ?? "", MarkdownContent ?? "", PageName ?? "", hostId, Publish ?? false);
     }
 
     public Resource GetUpdate(Resource resource)
     {
-        return resource with { CategoryId = CategoryId ?? resource.CategoryId, ExpansionId = ExpansionId ?? resource.ExpansionId, HtmlContent = HtmlContent ?? resource.HtmlContent, MarkdownContent = MarkdownContent ?? resource.MarkdownContent, PageName = PageName ?? resource.PageName };
+        return resource with { CategoryId = CategoryId ?? resource.CategoryId, TierId = TierId ?? resource.TierId, HtmlContent = HtmlContent ?? resource.HtmlContent, MarkdownContent = MarkdownContent ?? resource.MarkdownContent, PageName = PageName ?? resource.PageName };
     }
 };
 
