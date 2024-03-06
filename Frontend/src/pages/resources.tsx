@@ -1,23 +1,25 @@
-import { MouseEventHandler, useEffect, useRef, useState } from "react";
-import { Category, Expansion, Resource } from "../structs/resource";
+import { MouseEventHandler, lazy, useEffect, useState, Dispatch, SetStateAction } from "react";
+import { Category, Tier, Resource } from "../structs/resource";
 import { useRequest } from "../components/request";
 import { useAuth } from "../components/auth";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import hljs from "highlight.js";
+import { useNavigate, useParams } from "react-router-dom";
 import "highlight.js/styles/monokai-sublime.css";
 import { useToast } from "../components/toast";
-import { Carousel, Collapse, Dropdown, Modal, Offcanvas, Popover, ScrollSpy, Tab, Toast, Tooltip } from "bootstrap";
+import { useModal } from "../components/modal";
+const ResourceRender = lazy(() => import("../components/resourceViewer"));
 
 export default function Resources() {
     const [resources, setResources] = useState<Resource[]>([]);
-    const [expansions, setExpansions] = useState<Expansion[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
-    const [selectedExpansion, setSelectedExpansion] = useState<Expansion | null>(null);
+    const [tiers, setTiers] = useState<Tier[]>([]);
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
     const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
-    const { categoryId, expansionId, resourceId } = useParams();
+    const [selectedTier, setSelectedTier] = useState<Tier | null>(null);
+    const [hasNavigated, setHasNavigated] = useState(false);
+    const { categoryId, tierId, resourceId } = useParams();
     const request = useRequest().request;
     const toast = useToast().toast;
+    const modal = useModal();
     const navigate = useNavigate();
     const auth = useAuth();
 
@@ -51,14 +53,14 @@ export default function Resources() {
         }
     }
 
-    async function getExpansions() {
-        var res = await request("/api/resources/expansions");
-        var data = await res.json() as Expansion[];
-        setExpansions(data);
-        if (expansionId) {
-            var expansion = data.find(t => t.id === expansionId);
-            if (expansion) {
-                setSelectedExpansion(expansion);
+    async function getTiers() {
+        var res = await request("/api/resources/tiers");
+        var data = await res.json() as Tier[];
+        setTiers(data);
+        if (tierId) {
+            var tier = data.find(t => t.id === tierId);
+            if (tier) {
+                setSelectedTier(tier);
             }
         }
     }
@@ -82,12 +84,21 @@ export default function Resources() {
     }
 
     useEffect(() => {
+        if (resourceId) {
+            getFullResource(resourceId);
+        }
+        if (selectedCategory && !selectedCategory.hasTiers && tierId) {
+            getFullResource(tierId);
+        }
+    }, [resourceId, selectedCategory]);
+
+    useEffect(() => {
         getResources();
     }, [setResources]);
 
     useEffect(() => {
-        getExpansions();
-    }, [setExpansions]);
+        getTiers();
+    }, [setTiers]);
 
     useEffect(() => {
         getCategories();
@@ -95,43 +106,63 @@ export default function Resources() {
 
     useEffect(() => {
         var sParams = "";
-        if (selectedExpansion !== null)
-            sParams += `${selectedExpansion.id}`;
-        if (selectedCategory !== null) {
-            if (sParams !== "")
-                sParams += "/";
-
-            sParams += `${selectedCategory.id}`;
-        }
         if (selectedResource !== null) {
-            if (sParams !== "")
-                sParams += "/";
+            sParams += `${selectedCategory.id}`
+            if (selectedResource.category.hasTiers)
+                sParams += `/${selectedResource.tier.id}`;
 
-            sParams += `${selectedResource.id}`;
+            sParams += `/${selectedResource.id}`;
+        }
+        else {
+            if (selectedCategory !== null)
+                sParams += `${selectedCategory.id}`;
+            else if (categoryId && !hasNavigated)
+                sParams += `${categoryId}`;
+
+            if (selectedTier !== null) {
+                sParams += `/${selectedTier.id}`;
+            }
+            else if (tierId && !hasNavigated)
+                sParams += `/${tierId}`;
         }
         navigate(`/resources/${sParams}`, { replace: true });
-    }, [selectedExpansion, selectedCategory, selectedResource]);
+    }, [selectedTier, selectedCategory, selectedResource]);
 
-    useEffect(() => {
-        if (resourceId) {
-            getFullResource(resourceId);
-        }
-    }, [resourceId]);
-
-    function getFilteredResources(withExpansion: boolean = true, withCategory: boolean = true) {
-        if (!withExpansion) {
-            if (auth.user)
-                return resources;
-            return resources.filter(resource => resource.published);
-        }
+    function getFilteredResources(withCategory: boolean = true, withTier: boolean = true, skipTierCheck: boolean = false) {
+        var filterPredicate = (resource: Resource) => true;
         if (!withCategory) {
-            if (auth.user)
-                return resources.filter(resource => resource.expansion.id === selectedExpansion.id);
-            return resources.filter(resource => resource.expansion.id === selectedExpansion.id && resource.published);
+            filterPredicate = (resource: Resource) => (auth.user) ? true : resource.published;
         }
-        if (auth.user)
-            return resources.filter(resource => resource.expansion.id === selectedExpansion.id && resource.category.id === selectedCategory.id);
-        return resources.filter(resource => resource.expansion.id === selectedExpansion.id && resource.category.id === selectedCategory.id && resource.published);
+        else if (!withTier) {
+            filterPredicate = (resource: Resource) => resource.category.id === selectedCategory.id && (auth.user) ? true : resource.published;
+        }
+        else {
+            filterPredicate = (resource: Resource) => resource.category.id === selectedCategory.id && (skipTierCheck || (resource.category.hasTiers && resource.tier != null && resource.tier.id === selectedTier.id)) && (auth.user) ? true : resource.published;
+        }
+        return resources.filter(filterPredicate);
+    }
+
+    function getTopView(func: Dispatch<SetStateAction<any>>) {
+        var title = "";
+        if (selectedCategory)
+            title = selectedCategory.name;
+        if (selectedCategory.hasTiers && selectedTier)
+            title = title.concat(` > ${selectedTier.name}`);
+
+        return (
+            <div className="row">
+                <div className="d-flex justify-content-between align-items-center">
+                    <div className="me-auto d-flex align-content-center flex-wrap" style={{ cursor: "pointer" }} onClick={() => {
+                        func(null);
+                        setHasNavigated(true);
+                    }}>
+                        <i className="bi bi-arrow-90deg-up me-2"></i>
+                        <h5>Back</h5>
+                    </div>
+                    <h2>{title}</h2>
+                </div>
+            </div>
+        )
     }
 
     return (
@@ -140,18 +171,21 @@ export default function Resources() {
                 {selectedResource && <>
                     <div className="me-auto d-flex align-content-center flex-wrap" style={{ cursor: "pointer" }} onClick={() => {
                         setSelectedResource(null);
+                        setHasNavigated(true);
                     }}>
                         <i className="bi bi-arrow-90deg-up me-2"></i>
                         <h5>Back</h5>
                     </div>
                     <h1 className="me-2">{selectedResource.pageName}</h1>
                     <div className="d-flex align-content-center flex-wrap">
-                        {auth.user && <button className="btn btn-primary" onClick={() => {
-                            navigate(`/editor/${selectedResource.id}`);
-                        }}>Edit</button>}
+                        {auth.user &&
+                            <button className="btn btn-primary" onClick={() => {
+                                navigate(`/editor/${selectedResource.id}`);
+                            }}>Edit</button>
+                        }
                         <button className="btn btn-success ms-2" onClick={(e) => {
                             e.preventDefault();
-                            var loc = `https://pdp.wildwolf.dev/resources/${selectedExpansion.id}/${selectedCategory.id}/${selectedResource.id}`;
+                            var loc = `https://pdp.wildwolf.dev/resources/${selectedCategory.id}/${selectedTier.id}/${selectedResource.id}`;
                             navigator.clipboard.writeText(loc);
                             toast("Copied link to clipboard", "Resources", "success");
                         }}>Share</button>
@@ -160,65 +194,36 @@ export default function Resources() {
                 {!selectedResource && <>
                     <h1 className="me-auto">Resources</h1>
                     <div className="d-flex align-items-center">
-                        <button className="btn btn-primary" onClick={() => {
-                            navigate("/editor");
-                        }}>New Resource</button>
+                        {auth.user && <>
+                            {selectedCategory && selectedCategory.hasTiers && <button className="btn btn-primary" onClick={() => {
+                                modal(<AddTierModal category={selectedCategory} onSubmit={getTiers} />);
+                            }}>New Tier</button>}
+                            <button className="btn btn-primary ms-3" onClick={() => {
+                                navigate("/editor");
+                            }}>New Resource</button>
+                        </>}
                     </div>
                 </>}
             </div>
             {selectedResource && <ResourceRender resource={selectedResource} />}
             {!selectedResource &&
                 <div className="row d-flex justify-content-center">
-                    {!selectedExpansion && expansions.map((expansion, i) => <ExpansionCard key={`expansion-${i}`} expansion={expansion} resources={getFilteredResources(false)} onClick={(e) => {
-                        e.preventDefault();
-                        setSelectedExpansion(expansion);
-                    }} />)}
-                    {selectedExpansion && !selectedCategory &&
+                    {!selectedCategory &&
+                        categories.map((category, i) => <CategoryCard key={`category-${i}`} category={category} resources={getFilteredResources(false, false)} onClick={(e) => {
+                            e.preventDefault();
+                            setSelectedCategory(category);
+                        }} />)
+                    }
+                    {selectedCategory && selectedCategory.hasTiers && !selectedTier &&
                         <>
-                            <div className="row">
-                                <div className="d-flex justify-content-between align-items-center">
-                                    <div className="me-auto d-flex align-content-center flex-wrap" style={{ cursor: "pointer" }} onClick={() => {
-                                        setSelectedExpansion(null);
-                                    }}>
-                                        <i className="bi bi-arrow-90deg-up me-2"></i>
-                                        <h5>Back</h5>
-                                    </div>
-                                    <h2>{selectedExpansion.name}</h2>
-                                </div>
-                            </div>
-                            {categories.filter(t => getFilteredResources(true, false).flatMap(t => t.category.id).includes(t.id) || auth.user).map((category, i) => <CategoryCard key={`category-${i}`} category={category} resources={getFilteredResources(true, false)} onClick={(e) => {
-                                e.preventDefault();
-                                setSelectedCategory(category);
-                            }} />)}
+                            {getTopView(setSelectedCategory)}
+                            {tiers && <TierView tiers={tiers} onClick={setSelectedTier} category={selectedCategory} resources={getFilteredResources(true, false)} />}
                         </>
                     }
-                    {selectedCategory &&
+                    {selectedCategory && (!selectedCategory.hasTiers || selectedTier) &&
                         <>
-                            <div className="row">
-                                <div className="d-flex justify-content-between align-items-center">
-                                    <div className="me-auto d-flex align-content-center flex-wrap" style={{ cursor: "pointer" }} onClick={() => {
-                                        setSelectedCategory(null);
-                                    }}>
-                                        <i className="bi bi-arrow-90deg-up me-2"></i>
-                                        <h5>Back</h5>
-                                    </div>
-                                    <h2>{selectedExpansion.name} &gt; {selectedCategory.name}</h2>
-                                </div>
-                            </div>
-                            <div className="row">
-                                <ul className="list-group">
-                                    {getFilteredResources().map((resource, i) => <ResourceItem key={`resource-${i}`} resource={resource} onDelete={(e) => {
-                                        e.preventDefault();
-                                        deleteResource(resource.id);
-                                    }} onPublish={(e) => {
-                                        e.preventDefault();
-                                        publishResource(resource.id)
-                                    }} onView={(e) => {
-                                        e.preventDefault();
-                                        getFullResource(resource.id);
-                                    }} />)}
-                                </ul>
-                            </div>
+                            {getTopView(selectedCategory.hasTiers ? setSelectedTier : setSelectedCategory)}
+                            <ResourceView resources={getFilteredResources(true, true, !selectedCategory.hasTiers)} onDelete={deleteResource} onPublish={publishResource} onView={getFullResource} />
                         </>
                     }
                 </div>
@@ -227,16 +232,26 @@ export default function Resources() {
     )
 }
 
-function ExpansionCard({ expansion, onClick, resources }: { expansion: Expansion, onClick: React.MouseEventHandler<HTMLDivElement>, resources: Resource[] }) {
+function TierView({ tiers, onClick, category, resources }: { tiers: Tier[], onClick: Dispatch<SetStateAction<Tier>>, category: Category, resources: Resource[] }) {
     return (
-        <div className="card col-3 m-2 pt-2" onClick={onClick}>
-            <img src={expansion.iconUrl} className="card-img-top" alt={expansion.name} />
-            <div className="card-body">
-                <p className="card-text">{expansion.description}</p>
-                <sub className="card-text">{resources.filter(t => t.expansion.id === expansion.id).length} resources</sub>
-            </div>
-        </div>
+        <ul className="list-group">
+            {tiers.filter(t => t.category.id === category.id).map((tier, i) => <TierItem key={`tier-${i}`} tier={tier} onClick={(e => {
+                e.preventDefault();
+                onClick(tier);
+            })} resources={resources} />)}
+        </ul>
     );
+}
+
+function TierItem({ tier, onClick, resources }: { tier: Tier, onClick: React.MouseEventHandler<HTMLLIElement>, resources: Resource[] }) {
+    return (
+        <li className="list-group-item d-flex align-items-center" onClick={onClick}>
+            <img src={tier.iconUrl} style={{ maxHeight: 68 }} />
+            <h5 className="me-auto mb-0 ms-2">{tier.name}</h5>
+            <span>{resources.filter(t => t.tier.id === tier.id).length} resources</span>
+        </li>
+    )
+
 }
 
 function CategoryCard({ category, onClick, resources }: { category: Category, onClick: React.MouseEventHandler<HTMLDivElement>, resources: Resource[] }) {
@@ -247,6 +262,25 @@ function CategoryCard({ category, onClick, resources }: { category: Category, on
                 <p className="card-text">{category.description}</p>
                 <sub className="card-text">{resources.filter(t => t.category.id === category.id).length} resources</sub>
             </div>
+        </div>
+    );
+}
+
+function ResourceView({ resources, onDelete, onPublish, onView }: { resources: Resource[], onDelete: (e: string) => void, onPublish: (e: string) => void, onView: (e: string) => void }) {
+    return (
+        <div className="row">
+            <ul className="list-group">
+                {resources.map((resource, i) => <ResourceItem key={`resource-${i}`} resource={resource} onDelete={(e) => {
+                    e.preventDefault();
+                    onDelete(resource.id);
+                }} onPublish={(e) => {
+                    e.preventDefault();
+                    onPublish(resource.id)
+                }} onView={(e) => {
+                    e.preventDefault();
+                    onView(resource.id);
+                }} />)}
+            </ul>
         </div>
     );
 }
@@ -269,91 +303,136 @@ function ResourceItem({ resource, onDelete, onPublish, onView }: { resource: Res
     )
 }
 
-function ResourceRender({ resource }: { resource: Resource }) {
-    const divRef = useRef<HTMLDivElement>(null);
-    const scrollRefs = useRef<Record<string, HTMLElement>>({});
-    useEffect(() => {
-        if (divRef.current) {
-            scrollRefs.current = {};
-            divRef.current.querySelectorAll("h1").forEach((el) => {
-                const el2 = el as HTMLElement;
-                if (el2.id)
-                    scrollRefs.current[el2.id] = el2;
-            });
-            divRef.current.querySelectorAll("h2").forEach((el) => {
-                const el2 = el as HTMLElement;
-                if (el2.id)
-                    scrollRefs.current[el2.id] = el2;
-            });
-            divRef.current.querySelectorAll("h3").forEach((el) => {
-                const el2 = el as HTMLElement;
-                if (el2.id)
-                    scrollRefs.current[el2.id] = el2;
-            });
-            divRef.current.querySelectorAll("h4").forEach((el) => {
-                const el2 = el as HTMLElement;
-                if (el2.id)
-                    scrollRefs.current[el2.id] = el2;
-            });
-            divRef.current.querySelectorAll("[data-navigate]").forEach((el) => {
-                el.addEventListener("click", (e) => {
-                    e.preventDefault();
-                    const target = e.target as HTMLElement;
-                    const href = target.dataset.navigate;
-                    if (href) {
-                        const el = scrollRefs.current[href];
-                        if (el) {
-                            el.scrollIntoView({ behavior: "smooth" });
-                        }
-                    }
-                });
-            });
-            divRef.current.querySelectorAll("pre code").forEach((el) => {
-                const el2 = el as HTMLElement;
-                hljs.highlightElement(el2);
-            });
-            divRef.current.querySelectorAll(".carousel").forEach((el) => {
-                const el2 = el as HTMLElement;
-                new Carousel(el2);
-            });
-            divRef.current.querySelectorAll(".collapse").forEach((el) => {
-                const el2 = el as HTMLElement;
-                new Collapse(el2);
-            });
-            divRef.current.querySelectorAll(".dropdown-toggle").forEach((el) => {
-                const el2 = el as HTMLElement;
-                new Dropdown(el2);
-            });
-            divRef.current.querySelectorAll(".modal").forEach((el) => {
-                const el2 = el as HTMLElement;
-                new Modal(el2);
-            });
-            divRef.current.querySelectorAll(".offcanvas").forEach((el) => {
-                const el2 = el as HTMLElement;
-                new Offcanvas(el2);
-            });
-            divRef.current.querySelectorAll(".popover").forEach((el) => {
-                const el2 = el as HTMLElement;
-                new Popover(el2);
-            });
-            divRef.current.querySelectorAll(".scrollspy").forEach((el) => {
-                const el2 = el as HTMLElement;
-                new ScrollSpy(el2);
-            });
-            divRef.current.querySelectorAll(".tab-pane").forEach((el) => {
-                const el2 = el as HTMLElement;
-                new Tab(el2);
-            });
-            divRef.current.querySelectorAll(".toast").forEach((el) => {
-                const el2 = el as HTMLElement;
-                new Toast(el2);
-            });
-            divRef.current.querySelectorAll(".tooltip").forEach((el) => {
-                const el2 = el as HTMLElement;
-                new Tooltip(el2);
+function AddTierModal({ category, onSubmit }: { category: Category, onSubmit: () => void }) {
+    const [name, setName] = useState("");
+    const [iconUrl, setIconUrl] = useState("");
+    const [path, setPath] = useState("");
+    const [validation, setValidation] = useState<Record<string, string>>({});
+    const request = useRequest().request;
+    const modal = useModal();
+    const toast = useToast().toast;
+    const allowedTitleChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_ ()!@#$%^&*+=[]{}|;:,./<>?~`";
+    const allowedPathChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_";
+    const charLimit = 50;
+
+    function validate() {
+        var validationInternal: Record<string, string> = {};
+        if (!name) {
+            validationInternal["name"] = "Name cannot be empty";
+        }
+        if (name.length > charLimit) {
+            validationInternal["name"] = `Name cannot be longer than ${charLimit} characters`;
+        }
+        if (name.length < 3) {
+            validationInternal["name"] = "Name cannot be shorter than 3 characters";
+        }
+        for (const char of name) {
+            if (!allowedTitleChars.includes(char)) {
+                validationInternal["name"] = `Name cannot contain '${char}'`;
+            }
+        }
+        if (validationInternal["name"] === undefined) {
+            validationInternal["name"] = "";
+        }
+        if (!iconUrl) {
+            validationInternal["iconUrl"] = "Icon URL cannot be empty";
+        }
+        if (validationInternal["iconUrl"] === undefined) {
+            validationInternal["iconUrl"] = "";
+        }
+        if (!path) {
+            validationInternal["path"] = "Path cannot be empty";
+        }
+        for (const char of path) {
+            if (!allowedPathChars.includes(char)) {
+                validationInternal["path"] = `Path cannot contain '${char}'`;
+            }
+        }
+        if (validationInternal["path"] === undefined) {
+            validationInternal["path"] = "";
+        }
+        setValidation(validationInternal);
+        for (const key in validationInternal) {
+            if (validationInternal[key].length > 0) {
+                throw new Error(validationInternal[key]);
+            }
+        }
+    }
+
+    function createTier() {
+        try {
+            validate();
+            var tier = {
+                name: name,
+                iconUrl: iconUrl,
+                categoryId: category.id,
+                path: path
+            }
+            request("/api/resources/tiers", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(tier)
+            }).then(res => {
+                if (res.ok) {
+                    modal(null);
+                    onSubmit();
+                }
             });
         }
-    }, [resource]);
+        catch (e) {
+            if (e instanceof Error) {
+                toast(e.message, "EditorSaveModal", "error");
+            }
+            return;
+        }
+    }
 
-    return (<div className="p-2 bg-body container" ref={divRef} dangerouslySetInnerHTML={{ __html: resource.htmlContent }} />)
+    function getValidation(key: string) {
+        var val = validation[key];
+        if (val)
+            return val.length > 0 ? " is-invalid" : " is-valid";
+        return "";
+    }
+
+    return (
+        <div className="modal-dialog">
+            <div className="modal-content">
+                <div className="modal-header">
+                    <h5>Create Tier for <i>{category.name}</i></h5>
+                </div>
+                <div className="modal-body">
+                    <div className="form-group">
+                        <label htmlFor="name">Name</label>
+                        <input type="text" className={"form-control" + (getValidation("name"))} id="name" onChange={(e) => {
+                            e.preventDefault();
+                            setName(e.target.value);
+                        }} />
+                        {validation["name"] && <div className="invalid-feedback">{validation["name"]}</div>}
+                    </div>
+                    <div className="form-group mt-2">
+                        <label htmlFor="files">Icon URL<br /><sub>Use the file view and look either in game_icons/114000 or game_icons/112000</sub></label>
+                        <input type="url" className={"form-control" + (getValidation("iconUrl"))} id="files" onChange={(e) => {
+                            e.preventDefault();
+                            setIconUrl(e.target.value);
+                        }} />
+                        {validation["iconUrl"] && <div className="invalid-feedback">{validation["iconUrl"]}</div>}
+                    </div>
+                    <div className="form-group mt-2">
+                        <label htmlFor="path">Path<br /><sub>This is for where files are stored on the server</sub></label>
+                        <input type="text" className={"form-control" + (getValidation("path"))} id="path" onChange={(e) => {
+                            e.preventDefault();
+                            setPath(e.target.value);
+                        }} />
+                        {validation["path"] && <div className="invalid-feedback">{validation["path"]}</div>}
+                    </div>
+                </div>
+                <div className="modal-footer">
+                    <button className="btn btn-primary" onClick={() => createTier()}>Upload</button>
+                    <button className="btn btn-secondary" onClick={() => modal(null)}>Close</button>
+                </div>
+            </div>
+        </div>
+    )
 }

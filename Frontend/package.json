@@ -4,7 +4,7 @@
   "main": "index.js",
   "author": "PDP",
   "dependencies": {
-    "@microsoft/signalr": "^7.0.11",
+    "@microsoft/signalr": "^8.0.0",
     "@popperjs/core": "^2.11.8",
     "@uiw/react-markdown-editor": "^5.12.3",
     "bootstrap": "^5.3.2",
@@ -32,7 +32,8 @@
     "rehype-remove-style-type-css": "^4.0.0",
     "rehype-sort-attribute-values": "^5.0.0",
     "rehype-sort-attributes": "^5.0.0",
-    "sass": "^1.68.0"
+    "sass": "^1.68.0",
+    "socket.io-client": "^4.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.0.0-0",

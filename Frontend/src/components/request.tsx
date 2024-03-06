@@ -1,4 +1,4 @@
-import { useContext, createContext, useState } from "react";
+import { useContext, createContext, useState, useEffect } from "react";
 import Loader from "./loader";
 
 const RequestContext = createContext<{
@@ -6,7 +6,8 @@ const RequestContext = createContext<{
         name: string;
         id: string;
         avatar: string;
-        role: string;
+        roleName: string;
+        roleId: string;
         token: string;
     } | null>>;
     request: (url: string, options?: RequestInit) => Promise<Response>;
@@ -30,10 +31,12 @@ export default function RequestProvider({ children }: { children: React.ReactNod
         name: string;
         id: string;
         avatar: string;
-        role: string;
+        roleName: string;
+        roleId: string;
         token: string;
     } | null>(null);
     const [requesting, setRequesting] = useState<boolean>(false);
+    const [isAuthing, setIsAuthing] = useState<boolean>(false);
 
     async function request(url: string, options: RequestInit = {}): Promise<Response> {
         if (!!auth)
@@ -47,11 +50,18 @@ export default function RequestProvider({ children }: { children: React.ReactNod
         if (process.env.REACT_APP_API_URL) {
             url = process.env.REACT_APP_API_URL + url;
         }
+        if (url.includes("auth") && !isAuthing) {
+            setIsAuthing(true);
+        }
         setRequesting(true);
         var response: Response;
         try {
             response = await fetch(url, options);
             if (!response.ok) {
+                if (process.env.NODE_ENV === "development") {
+                    console.error(response);
+                    console.error(await response.text());
+                }
                 throw new RequestError(response);
             }
             return response;

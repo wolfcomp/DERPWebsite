@@ -4,7 +4,7 @@ export class Schedule {
     id: string;
     name: string;
     hostId: string;
-    hostName: string;
+    hostName?: string;
     duration: string;
     at: string;
 

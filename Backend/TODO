@@ -1,7 +1,5 @@
-✔ Add NLog target for logs to go into the #logs channel on discord @done(23-10-12 06:21)
-☐ Start working on phasing out TempVoice
+✔ Remove expansion and use tiers instead @done(24-03-06 15:54)
 Kubobot Phaseout:
-    ☐ Add quotes/notes
     ☐ Add lodestone integration
     ☐ Add modmail support
     ☐ Add a way to add/remove roles

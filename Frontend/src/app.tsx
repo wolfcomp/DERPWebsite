@@ -34,9 +34,9 @@ export default function App() {
                                 <Route path="/about" element={<About />} />
                                 <Route path="/schedule" element={<Schedule />} />
                                 <Route path="/resources" element={<Resources />} />
-                                <Route path="/resources/:expansionId" element={<Resources />} />
-                                <Route path="/resources/:expansionId/:categoryId" element={<Resources />} />
-                                <Route path="/resources/:expansionId/:categoryId/:resourceId" element={<Resources />} />
+                                <Route path="/resources/:categoryId" element={<Resources />} />
+                                <Route path="/resources/:categoryId/:tierId" element={<Resources />} />
+                                <Route path="/resources/:categoryId/:tierId/:resourceId" element={<Resources />} />
                                 {/* <Route path="/map" element={<Map />} />
                                 <Route path="/map/:mapId" element={<Map />} /> */}
                                 {auth.user && <>

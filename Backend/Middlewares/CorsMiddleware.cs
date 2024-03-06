@@ -11,9 +11,9 @@ public class CorsMiddleware
 
     public async Task Invoke(HttpContext context)
     {
-        context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
-        context.Response.Headers.Add("Access-Control-Allow-Headers", "*");
-        context.Response.Headers.Add("Access-Control-Allow-Methods", "*");
+        context.Response.Headers.AccessControlAllowOrigin = "*";
+        context.Response.Headers.AccessControlAllowHeaders = "*";
+        context.Response.Headers.AccessControlAllowMethods = "*";
 
         await _next.Invoke(context);
     }

@@ -34,7 +34,7 @@ public class AuthController : ControllerBase
         var token = Guid.NewGuid();
         var loginRecord = new Login(token, userId);
         _rClient.SetObj(token.ToString(), loginRecord);
-        return Ok(UserReturn.FromUser(user, role, token.ToString()));
+        return Ok(UserReturn.FromUser(user, role!, token.ToString()));
     }
 
     [HttpGet, ServiceFilter(typeof(AuthFilter))]
@@ -58,7 +58,7 @@ public class AuthController : ControllerBase
         {
             return Unauthorized();
         }
-        return Ok(UserReturn.FromUser(user, role, token));
+        return Ok(UserReturn.FromUser(user, role!, token));
     }
 
     [HttpPost, ServiceFilter(typeof(AuthFilter))]
@@ -83,7 +83,7 @@ public class AuthController : ControllerBase
             return Unauthorized();
         }
         _rClient.SetExpire(token, TimeSpan.FromDays(7));
-        return Ok(UserReturn.FromUser(user, role, token));
+        return Ok(UserReturn.FromUser(user, role!, token));
     }
 
     [HttpDelete]
@@ -100,10 +100,10 @@ public class AuthController : ControllerBase
     }
 }
 
-public record UserReturn(ulong Id, string Name, string AvatarUrl, string Role, string Token)
+public record UserReturn(ulong Id, string Name, string AvatarUrl, string RoleName, ulong RoleId, string Token)
 {
-    public static UserReturn FromUser(SocketGuildUser user, SocketRole? role, string token)
+    public static UserReturn FromUser(SocketGuildUser user, SocketRole role, string token)
     {
-        return new UserReturn(user.Id, user.DisplayName, user.GetAvatarUrl(), role!.Name, token);
+        return new UserReturn(user.Id, user.DisplayName, user.GetAvatarUrl(), role.Name, role.Id, token);
     }
 }

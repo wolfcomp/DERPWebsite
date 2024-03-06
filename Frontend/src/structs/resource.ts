@@ -7,8 +7,8 @@ export interface Resource {
     markdownContent?: string;
     categoryId?: string;
     category?: Category;
-    expansionId?: string;
-    expansion?: Expansion;
+    tierId?: string;
+    tier?: Tier;
     hostId?: string;
 }
 
@@ -17,13 +17,17 @@ export interface Category {
     name: string;
     description: string;
     iconUrl: string;
+    hasTiers: boolean;
+    path: string;
 }
 
-export interface Expansion {
+export interface Tier {
     id: string;
+    category: Category;
+    categoryId: string;
     name: string;
-    description: string;
     iconUrl: string;
+    path: string;
 }
 
 export interface ResourceFile {

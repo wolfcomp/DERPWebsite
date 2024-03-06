@@ -7,7 +7,8 @@ export const AuthContext = createContext<{
         name: string;
         id: string;
         avatar: string;
-        role: string;
+        roleName: string;
+        roleId: string;
         token: string;
     } | null;
     login: (uid: string) => Promise<void>;
@@ -23,7 +24,8 @@ export function AuthProvider(props: any) {
         name: string;
         id: string;
         avatar: string;
-        role: string;
+        roleName: string;
+        roleId: string;
         token: string;
     } | null>(null);
     const requestContext = useRequest();

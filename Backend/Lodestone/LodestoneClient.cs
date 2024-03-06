@@ -38,17 +38,17 @@ public class LodestoneGameClient : IGameDataProvider
 
     private uint GetItemRowId(string name)
     {
-        var en = _gameClient.GetSheet<Item>();
+        var en = _gameClient.GetSheet<Item>()!;
         var row = en.FirstOrDefault(x => x.Name.ToString().Equals(name, StringComparison.InvariantCultureIgnoreCase));
         return row?.RowId ?? 0;
     }
 
     private (Item en, Item de, Item fr, Item ja) GetItemRow(uint rowId)
     {
-        var en = _gameClient.GetSheet<Item>(Language.English).GetRow(rowId);
-        var de = _gameClient.GetSheet<Item>(Language.German).GetRow(rowId);
-        var fr = _gameClient.GetSheet<Item>(Language.French).GetRow(rowId);
-        var ja = _gameClient.GetSheet<Item>(Language.Japanese).GetRow(rowId);
+        var en = _gameClient.GetSheet<Item>(Language.English)!.GetRow(rowId)!;
+        var de = _gameClient.GetSheet<Item>(Language.German)!.GetRow(rowId)!;
+        var fr = _gameClient.GetSheet<Item>(Language.French)!.GetRow(rowId)!;
+        var ja = _gameClient.GetSheet<Item>(Language.Japanese)!.GetRow(rowId)!;
         return (en, de, fr, ja);
     }
 }

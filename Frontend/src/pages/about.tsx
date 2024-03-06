@@ -10,6 +10,7 @@ export default function About() {
     const signalr = useSignalR();
     const request = useRequest().request;
     const auth = useAuth();
+    const roles = process.env.REACT_APP_EDITOR_IDS.split(",");
 
     async function getUsers() {
         var rep = await request("/api/aboutinfo");
@@ -51,7 +52,7 @@ export default function About() {
                 <h1>About</h1>
             </div>
             <div className="row d-flex justify-content-center">
-                {users && users.map((user) => <div className="col-12 col-md-7 col-lg-5 col-xl-4" key={user.id}><UserCard user={{ ...user, canEdit: auth.user && (auth.user.role === "Admin" || auth.user.role === "Mods" || auth.user.role === "Devs" || user.id === auth.user.id) }} /></div>)}
+                {users && users.map((user) => <div className="col-12 col-md-7 col-lg-5 col-xl-4" key={user.id}><UserCard user={{ ...user, canEdit: auth.user && (roles.includes(auth.user.roleId) || user.id === auth.user.id) }} /></div>)}
             </div>
         </div>
     );
@@ -61,8 +62,8 @@ function UserCard(props: { user: User & { canEdit: boolean } }) {
     const request = useRequest().request;
     const setModal = useModal();
     const formRef = useRef<HTMLDivElement>(null);
-    function textColor() {
-        var rgb = props.user.roleColor.substring(1);
+    function textColor(text: string) {
+        var rgb = text.substring(1);
         var r = parseInt(rgb.substring(0, 2), 16);
         var g = parseInt(rgb.substring(2, 4), 16);
         var b = parseInt(rgb.substring(4, 6), 16);
@@ -143,7 +144,8 @@ function UserCard(props: { user: User & { canEdit: boolean } }) {
                 <h5 className="card-title">{props.user.visualName ?? props.user.originalName}</h5>
                 <div className="d-flex align-items-center">
                     <img src={props.user.avatar} className="rounded-circle me-3" style={{ width: 48, height: 48 }} alt="User Avatar"></img>
-                    <p className="badge pill-rounded m-0" style={{ backgroundColor: props.user.roleColor, color: textColor() }}>{props.user.roleName}</p>
+                    {props.user.roles && props.user.roles.map((role) => <p key={role.id} className="badge pill-rounded m-0 me-2" style={{ backgroundColor: role.color, color: textColor(role.color) }}>{role.name}</p>)}
+                    {props.user.roleName && <p className="badge pill-rounded m-0" style={{ backgroundColor: props.user.roleColor, color: textColor(props.user.roleColor) }}>{props.user.roleName}</p>}
                 </div>
                 <p className="card-text">{props.user.description}</p>
             </div>

@@ -32,9 +32,9 @@ builder.Services.AddSingleton<GameClient>();
 builder.Services.AddSingleton<DiscordConnection>();
 builder.Services.AddSingleton<RedisClient>();
 builder.Services.AddSingleton<LodestoneGameClient>();
-builder.Services.AddSingleton(provider =>
-    LodestoneClient.GetClientAsync(provider.GetRequiredService<LodestoneGameClient>()).ConfigureAwait(false)
-        .GetAwaiter().GetResult());
+// builder.Services.AddSingleton(provider =>
+//     LodestoneClient.GetClientAsync(provider.GetRequiredService<LodestoneGameClient>(), provider.GetRequiredService<ILogger<LodestoneClient>>()).ConfigureAwait(false)
+//         .GetAwaiter().GetResult());
 builder.Services.AddScoped<AuthFilter>();
 builder.Services.AddDbContext<Database>(conf => conf.UseNpgsql("Database=pdp;Username=postgres;Password=postgres;Host=localhost;"));
 builder.Services.AddSwaggerGen(c =>

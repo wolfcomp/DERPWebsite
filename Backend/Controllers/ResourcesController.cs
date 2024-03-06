@@ -29,7 +29,7 @@ public class ResourcesController : ControllerBase
         {
             resource.Id,
             Category = new { resource.Category.Id, resource.Category.Name, resource.Category.Description, resource.Category.IconUrl, resource.Category.HasTiers },
-            Tier = new { resource.Tier.Id, resource.Tier.Name, resource.Tier.IconUrl },
+            Tier = resource.Tier != null ? new { resource.Tier.Id, resource.Tier.Name, resource.Tier.IconUrl } : null,
             resource.PageName,
             resource.Published
         }));
@@ -60,7 +60,9 @@ public class ResourcesController : ControllerBase
             {
                 return Problem();
             }
-            _database.Database.ExecuteSqlRaw(@"UPDATE ""Resources"" SET ""ExpansionId"" = {0}, ""CategoryId"" = {1}, ""HtmlContent"" = {2}, ""MarkdownContent"" = {3}, ""PageName"" = {4}, ""Published"" = {5} WHERE ""Id"" = {6}", resourceHttp.TierId ?? resource.TierId, resourceHttp.CategoryId ?? resource.CategoryId, resourceHttp.HtmlContent ?? resource.HtmlContent, resourceHttp.MarkdownContent ?? resource.MarkdownContent, resourceHttp.PageName ?? resource.PageName, resourceHttp.Publish ?? resource.Published, resourceHttp.Id);
+#pragma warning disable CS8604 // Possible null reference argument.
+            _database.Database.ExecuteSqlRaw(@"UPDATE ""Resources"" SET ""TierId"" = {0}, ""CategoryId"" = {1}, ""HtmlContent"" = {2}, ""MarkdownContent"" = {3}, ""PageName"" = {4}, ""Published"" = {5} WHERE ""Id"" = {6}", resourceHttp.TierId ?? resource.TierId, resourceHttp.CategoryId ?? resource.CategoryId, resourceHttp.HtmlContent ?? resource.HtmlContent, resourceHttp.MarkdownContent ?? resource.MarkdownContent, resourceHttp.PageName ?? resource.PageName, resourceHttp.Publish ?? resource.Published, resourceHttp.Id);
+#pragma warning restore CS8604 // Possible null reference argument.
         }
         _database.ChangeTracker.Clear();
         _database.SaveChanges();
@@ -69,7 +71,7 @@ public class ResourcesController : ControllerBase
         {
             resource.Id,
             Category = new { resource.Category.Id, resource.Category.Name, resource.Category.Description, resource.Category.IconUrl, resource.Category.HasTiers },
-            Tier = new { resource.Tier.Id, resource.Tier.Name, resource.Tier.IconUrl },
+            Tier = resource.Tier != null ? new { resource.Tier.Id, resource.Tier.Name, resource.Tier.IconUrl } : null,
             resource.PageName,
             resource.Published,
             resource.HtmlContent,
@@ -114,7 +116,7 @@ public class ResourcesController : ControllerBase
         {
             resource.Id,
             Category = new { resource.Category.Id, resource.Category.Name, resource.Category.Description, resource.Category.IconUrl, resource.Category.HasTiers },
-            Tier = new { resource.Tier.Id, resource.Tier.Name, resource.Tier.IconUrl },
+            Tier = resource.Tier != null ? new { resource.Tier.Id, resource.Tier.Name, resource.Tier.IconUrl } : null,
             resource.PageName,
             resource.HtmlContent,
             resource.MarkdownContent
@@ -154,7 +156,22 @@ public class ResourcesController : ControllerBase
     [SwaggerResponse(StatusCodes.Status500InternalServerError, "Internal server error", typeof(string))]
     public IActionResult GetTiers()
     {
-        return Ok(_database.Tiers.Select(t => new { t.Id, t.Name, t.IconUrl }));
+        return Ok(_database.Tiers.Include(t => t.Category).Select(t => new { t.Id, t.Name, t.IconUrl, Category = new { t.Category.Id, t.Category.Name, t.Category.Description, t.Category.IconUrl, t.Category.HasTiers } }));
+    }
+
+    [HttpPost]
+    [Route("tiers")]
+    [ServiceFilter(typeof(AuthFilter))]
+    [SwaggerOperation("Creates a tier")]
+    [SwaggerResponse(StatusCodes.Status200OK, "Returns if successful", typeof(Tier))]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, "Invalid request body", typeof(string))]
+    [SwaggerResponse(StatusCodes.Status401Unauthorized, "Invalid or missing authorization token", typeof(string))]
+    [SwaggerResponse(StatusCodes.Status500InternalServerError, "Internal server error", typeof(string))]
+    public IActionResult PutTier([FromBody] TierHttp tier)
+    {
+        _database.Tiers.Add(new Tier(null, tier.CategoryId, tier.Name, tier.IconUrl, tier.Path));
+        _database.SaveChanges();
+        return Ok(tier);
     }
 
     [HttpPost]
@@ -175,11 +192,14 @@ public class ResourcesController : ControllerBase
             return NotFound("Could not find connected resource. Have you saved a draft yet?");
         }
         var file = upload.File;
-        var path = Path.Combine(resource.Tier.Path, resource.Category.Path, fileId);
-        if (!Directory.Exists(Path.Combine(_environmentContainer.Get("EDITOR_RESOURCE_PATH"), resource.Tier.Path, resource.Category.Path)))
+        var path = resource.Category.Path;
+        if (resource.Category.HasTiers)
+            path = Path.Combine(path, resource.Tier!.Path);
+        if (!Directory.Exists(Path.Combine(_environmentContainer.Get("EDITOR_RESOURCE_PATH"), path)))
         {
-            Directory.CreateDirectory(Path.Combine(_environmentContainer.Get("EDITOR_RESOURCE_PATH"), resource.Tier.Path, resource.Category.Path));
+            Directory.CreateDirectory(Path.Combine(_environmentContainer.Get("EDITOR_RESOURCE_PATH"), path));
         }
+        path = Path.Combine(path, fileId);
         var stream = new FileStream(Path.Combine(_environmentContainer.Get("EDITOR_RESOURCE_PATH"), path), FileMode.Create);
         file.CopyTo(stream);
         stream.Close();
@@ -283,3 +303,5 @@ public record ResourceHttp(Guid? Id, Guid? CategoryId, Guid? TierId, string? Htm
 public record FileUpload(IFormFile File, Guid Id);
 
 public record FileReturn(Guid Id, string Name, string Path);
+
+public record TierHttp(Guid CategoryId, string Name, string IconUrl, string Path);

@@ -44,6 +44,10 @@ public class Database : DbContext
             options.HasMany(e => e.Resources)
                 .WithOne(e => e.Category)
                 .HasForeignKey(e => e.CategoryId);
+
+            options.HasMany(e => e.Tiers)
+                .WithOne(e => e.Category)
+                .HasForeignKey(e => e.CategoryId);
         });
 
         modelBuilder.Entity<Tier>(options =>

@@ -40,11 +40,12 @@ public class AboutInfoController : ControllerBase
         var ret = new List<AboutInfoExtended>();
         foreach (var socketGuildUser in users)
         {
-            if (!socketGuildUser.TryGetHighestRole(roles, out var role))
+            if (!socketGuildUser.TryGetAllRoles(roles, out var role))
                 continue;
+            var roleArr = role.Select(t => new AboutInfoRoles(t.Id, t.Name, t.Color.ToString())).ToArray();
             ret.Add(aboutInfo.Any(t => t.Id == socketGuildUser.Id)
-                ? AboutInfoExtended.FromInfo(aboutInfo.First(t => t.Id == socketGuildUser.Id), socketGuildUser, role!)
-                : new AboutInfoExtended(socketGuildUser.Id, "", role!.Name, role.Color.ToString()!, socketGuildUser.GetDisplayAvatarUrl(), socketGuildUser.DisplayName, null));
+                ? AboutInfoExtended.FromInfo(aboutInfo.First(t => t.Id == socketGuildUser.Id), socketGuildUser, roleArr)
+                : new AboutInfoExtended(socketGuildUser.Id, "",  socketGuildUser.GetDisplayAvatarUrl(), socketGuildUser.DisplayName, null, roleArr));
         }
         return Ok(ret);
     }

@@ -1,4 +1,6 @@
-﻿using PDPWebsite.Hubs;
+﻿using Microsoft.EntityFrameworkCore;
+using PDPWebsite.Hubs;
+using PDPWebsite.Models;
 
 namespace PDPWebsite.Controllers;
 
@@ -57,10 +59,33 @@ public class ScheduleController : ControllerBase
 
     [HttpGet, ServiceFilter(typeof(AuthFilter))]
     [Route("all")]
-    public async Task<IActionResult> GetSchedule()
+    public Task<IActionResult> GetSchedule()
     {
-        var schedules = await _database.Schedules.ToListAsync();
-        return Ok(schedules.Select(t => ScheduleHttp.FromSchedule(t, _discord, _database)));
+        var scheduleHttps = _database.Database.SqlQueryRaw<ScheduleHttp>("""
+                                                     select s."Id", s."Name", s."HostId", s."Duration", s."At", a."VisualName" as "HostName" from "Schedules" s
+                                                     left outer join "AboutInfos" a on s."HostId" = a."Id"
+                                                     """).ToList();
+        var nulls = scheduleHttps.DistinctBy(t => t.HostId).Where(t => t.HostName is null).ToDictionary(t => t.HostId, t => t.HostName);
+        foreach (var (id, _) in nulls)
+        {
+            try
+            {
+                nulls[id] = _discord.GetUserName(id);
+            }
+            catch
+            {
+                nulls[id] = "N/A";
+            }
+        }
+
+        foreach (var t in scheduleHttps)
+        {
+            if (nulls.TryGetValue(t.HostId, out var value))
+            {
+                t.HostName = value;
+            }
+        }
+        return Task.FromResult<IActionResult>(Ok(scheduleHttps));
     }
 
     [HttpPost, ServiceFilter(typeof(AuthFilter))]
@@ -102,11 +127,17 @@ public class ScheduleController : ControllerBase
     }
 }
 
-public record ScheduleHttp(Guid? Id, string Name, ulong HostId, string? HostName, TimeSpan Duration, DateTime At)
+public class ScheduleHttp(Guid? id, string name, ulong hostId, string? hostName, TimeSpan duration, DateTime at)
 {
+    public Guid? Id { get; set; } = id;
+    public string Name { get; set; } = name;
+    public ulong HostId { get; set; } = hostId;
+    public string? HostName { get; set; } = hostName;
+    public TimeSpan Duration { get; set; } = duration;
+    public DateTime At { get; set; } = at;
     public static ScheduleHttp FromSchedule(Schedule schedule, DiscordConnection discord, Database database)
     {
-        return new ScheduleHttp(schedule.Id, schedule.Name, schedule.HostId, database.AboutInfos.FirstOrDefault(t => t.Id == schedule.HostId)?.VisualName ?? discord.Guild!.GetUser(schedule.HostId).DisplayName, schedule.Duration, schedule.At);
+        return new ScheduleHttp(schedule.Id, schedule.Name, schedule.HostId, database.GetUserName(discord, schedule.HostId), schedule.Duration, schedule.At);
     }
 }
 
@@ -115,5 +146,22 @@ public static class ScheduleExtensions
     public static Schedule GetSchedule(this ScheduleHttp schedule)
     {
         return new Schedule(null, schedule.Name, schedule.HostId, schedule.Duration, schedule.At);
+    }
+
+    public static string GetUserName(this Database database, DiscordConnection discord, ulong id)
+    {
+        var aboutInfo = database.AboutInfos.FirstOrDefault(t => t.Id == id);
+        string? name = null;
+        if (aboutInfo is not null)
+        {
+            name = aboutInfo.VisualName;
+        }
+        return name ?? discord.GetUserName(id) ?? "N/A";
+    }
+
+    public static string? GetUserName(this DiscordConnection discord, ulong id)
+    {
+        var user = discord.Guild!.GetUser(id);
+        return user?.DisplayName;
     }
 }

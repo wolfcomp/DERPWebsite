@@ -64,6 +64,19 @@ static partial class DiscordExtensions
         return false;
     }
 
+    public static bool TryGetAllRoles(this SocketGuildUser user, IEnumerable<ulong> roleList, out IEnumerable<SocketRole> roles)
+    {
+        var k = user.Roles;
+        var ret = new List<SocketRole>();
+        foreach (var roleId in roleList)
+        {
+            if (k.TryGetRole(roleId, out var role))
+                ret.Add(role!);
+        }
+        roles = ret;
+        return ret.Any();
+    }
+
     public static bool TryGetRole(this IEnumerable<SocketRole> roles, ulong roleId, out SocketRole? role)
     {
         role = roles.FirstOrDefault(t => t.Id == roleId);

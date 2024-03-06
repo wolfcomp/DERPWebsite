@@ -118,7 +118,7 @@ export default function ScheduleRoot() {
                     <ScheduleTable style={{ position: "relative", left: showing === "week" ? 0 : "-100%" }} dates={dates} schedules={schedules} times={times} curTime={curTime} />
                     <ScheduleTable style={{ position: "absolute", left: showing === "next" ? 0 : "100%" }} dates={nextDates} schedules={nextSchedules} times={times} curTime={curTime} />
                 </div>}
-            {auth && <ScheduleEditor schedules={[...schedules, ...nextSchedules]} mobile={mobile} />}
+            {auth && <ScheduleEditor mobile={mobile} />}
         </div>
     );
 }

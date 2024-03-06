@@ -204,7 +204,7 @@ public class QuoteAdmin : ISlashCommandProcessor
             parsedColor = new Color(rgb[0], rgb[1], rgb[2]).RawValue;
         }
     colorParsed:
-        var quote = new Models.Quote(null, text, title, chance, _arg.User.Id, user.Id, DateTime.UtcNow, parsedColor);
+        var quote = new Models.Quote(null, text, title, chance ?? 50, _arg.User.Id, user.Id, DateTime.UtcNow, parsedColor);
         await _database.Quotes.AddAsync(quote);
         await _database.SaveChangesAsync();
         await _arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Added quote with id {quote.Id}");

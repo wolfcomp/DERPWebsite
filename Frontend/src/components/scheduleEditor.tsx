@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { useModal } from "../components/modal";
 import { Schedule } from "../structs/schedule";
 import { DateTime } from "luxon";
@@ -6,15 +6,89 @@ import { Dropdown, Tooltip } from "bootstrap";
 import { useRequest } from "./request";
 import { useToast } from "./toast";
 
-export default function ScheduleEditor(props: { schedules: Schedule[], mobile: boolean }) {
+export default function ScheduleEditor(props: { mobile: boolean }) {
+    const [schedules, setSchedules] = useState<Schedule[]>([]);
+    const [page, setPage] = useState(0);
+    const [pageSize, setPageSize] = useState(10);
     const modal = useModal();
+    const request = useRequest().request;
     const toast = useToast().toast;
 
+    async function getSchedules() {
+        var res = await request("/api/schedule/all");
+        if (!res.ok)
+            return;
+        setSchedules(((await res.json()) as Schedule[]).map(t => new Schedule(t.id, t.name, t.hostId, t.hostName, t.duration, t.at)));
+    }
+
+    function nextPage(e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) {
+        e.preventDefault();
+        if (page + 1 < Math.ceil(schedules.length / pageSize)) {
+            setPage(page + 1);
+        }
+    }
+
+    function prevPage(e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) {
+        e.preventDefault();
+        if (page > 0) {
+            setPage(page - 1);
+        }
+    }
+
+    function getPageButtons() {
+        function getButton(pageNumber: number, text?: string | ReactNode, func?: (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void, shouldDisable?: boolean) {
+            if (!func)
+                func = () => setPage(pageNumber);
+            return <li className={"page-item" + (page === pageNumber ? (shouldDisable ? " disabled" : " active") : "")} key={"page" + (shouldDisable ? func.name : pageNumber)}><a className="page-link" onClick={func}>{text || pageNumber + 1}</a></li>;
+        }
+        function getEllipsis(num: number) {
+            return <li className="page-item disabled" key={"ellipsis" + num}><a className="page-link">...</a></li>;
+        }
+        var buttons = [];
+        buttons.push(getButton(0, <>&laquo;</>, prevPage, true));
+
+        if (Math.ceil(schedules.length / pageSize) > 5 && page > 3) {
+            buttons.push(getButton(0));
+            buttons.push(getEllipsis(0));
+        }
+        var minPage = 0;
+        if (Math.ceil(schedules.length / pageSize) > 5 && page > 3) {
+            minPage = Math.ceil(schedules.length / pageSize) - 5;
+        }
+        if (Math.ceil(schedules.length / pageSize) > 5 && page > 3 && page < Math.ceil(schedules.length / pageSize) - 3) {
+            buttons.push(getButton(page - 1));
+            buttons.push(getButton(page));
+            buttons.push(getButton(page + 1));
+        }
+        else {
+            for (var i = 0; i < Math.min(5, Math.ceil(schedules.length / pageSize)); i++) {
+                buttons.push(getButton(minPage + i));
+            }
+        }
+        if (Math.ceil(schedules.length / pageSize) > 5 && page < Math.ceil(schedules.length / pageSize) - 3) {
+            buttons.push(getEllipsis(1));
+            buttons.push(getButton(Math.ceil(schedules.length / pageSize) - 1));
+        }
+
+        buttons.push(getButton(Math.ceil(schedules.length / pageSize) - 1, <>&raquo;</>, nextPage, true));
+        return buttons;
+    }
+
+    function setPageSizeAndReset(size: number) {
+        setPageSize(size);
+        setPage(0);
+    }
+
+    useEffect(() => {
+        getSchedules();
+    }, [setSchedules]);
+
     function exportBuffer() {
-        var schedulesByDay = props.schedules.map((schedule) => {
+        var schedulesByDay = schedules.map((schedule) => {
             var startOfDay = schedule.getStart().setZone("America/Los_Angeles").startOf("day");
             var weekday = startOfDay.weekday;
             var week = startOfDay.weekNumber;
+            var year = startOfDay.year;
             var day = "";
             switch (weekday) {
                 case 1:
@@ -42,30 +116,42 @@ export default function ScheduleEditor(props: { schedules: Schedule[], mobile: b
             }
             return {
                 name: schedule.name,
-                host: schedule.hostName.split(" ")[0],
+                host: schedule.hostName ? schedule.hostName.split(" ")[0] : "N/A",
                 time: schedule.getStart(),
                 day: day,
-                week: week
+                week: week,
+                year: year
             };
-        }).reduce((acc: { [key: string | number]: { [key: string]: { name: string, host: string, time: DateTime, day: string, week: number }[] } }, cur) => {
-            if (!acc[cur.week]) {
-                acc[cur.week] = {};
+        }).reduce((acc: { [key: string | number]: { [key: string | number]: { [key: string]: { name: string, host: string, time: DateTime, day: string, week: number }[] } } }, cur) => {
+            if (!acc[cur.year]) {
+                acc[cur.year] = {};
             }
-            if (!acc[cur.week][cur.day]) {
-                acc[cur.week][cur.day] = [];
+            if (!acc[cur.year][cur.week]) {
+                acc[cur.year][cur.week] = {};
             }
-            acc[cur.week][cur.day].push(cur);
+            if (!acc[cur.year][cur.week][cur.day]) {
+                acc[cur.year][cur.week][cur.day] = [];
+            }
+            acc[cur.year][cur.week][cur.day].push(cur);
             return acc;
         }, {});
-        var t = props.schedules[0].getStart();
+        var t = schedules[0].getStart();
         console.log(t.toUnixInteger(), t.offset);
-        var buffer = Object.keys(schedulesByDay).map((week) => {
-            return `Week ${week}\n` + Object.keys(schedulesByDay[week]).map((day) => {
-                return `**${day}**\n` + schedulesByDay[week][day].map((schedule) => {
-                    return `- ${schedule.name}: <t:${schedule.time.toUnixInteger()}:F> [${schedule.host}]`;
-                }).join("\n");
-            }).join("\n\n");
-        }).join("\n\n");
+        var buffer = "";
+        Object.keys(schedulesByDay).forEach((year) => {
+            buffer += `Year ${year}\n`;
+            Object.keys(schedulesByDay[year]).forEach((week) => {
+                buffer += `Week ${week}\n`;
+                Object.keys(schedulesByDay[year][week]).forEach((day) => {
+                    buffer += `**${day}**\n`;
+                    schedulesByDay[year][week][day].forEach((schedule) => {
+                        buffer += `- ${schedule.name}: <t:${schedule.time.toUnixInteger()}:F> [${schedule.host}]\n`;
+                    });
+                });
+                buffer += "\n";
+            });
+            buffer += "\n";
+        });
         //send buffer into clipboard
         navigator.clipboard.writeText(buffer);
         toast("Copied to clipboard", "Schedule Editor", "success");
@@ -81,8 +167,15 @@ export default function ScheduleEditor(props: { schedules: Schedule[], mobile: b
                 </div>
             </div>
             <ul className="list-group" style={{ paddingLeft: "calc(var(--bs-gutter-x) * 0.5)" }}>
-                {props.schedules.sort((a, b) => a.getStart().diff(b.getStart(), "days").days).map((schedule) => <ScheduleTableItem key={schedule.id} schedule={schedule} mobile={props.mobile} />)}
+                {schedules.sort((a, b) => b.getStart().diff(a.getStart(), "days").days).slice(page * pageSize, page * pageSize + pageSize).map((schedule) => <ScheduleTableItem key={schedule.id} schedule={schedule} mobile={props.mobile} />)}
             </ul>
+            <nav>
+                <div className="d-flex justify-content-end">
+                    <ul className="pagination col-4 text-center">
+                        {getPageButtons()}
+                    </ul>
+                </div>
+            </nav>
         </div >
     );
 }

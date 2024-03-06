@@ -22,7 +22,7 @@ import { useRequest } from "../components/request";
 import { Statuses } from "../components/status";
 import { useModal } from "../components/modal";
 import { useToast } from "../components/toast";
-import { Category, Expansion, Resource, ResourceFile } from "../structs/resource";
+import { Category, Tier, Resource, ResourceFile } from "../structs/resource";
 import "./editor.scss";
 import "highlight.js/styles/monokai-sublime.css";
 import { useNavigate, useParams } from "react-router-dom";
@@ -213,7 +213,7 @@ export default function Editor() {
                 }}>{display === "editor" ? "Change to preview" : "Change to editor"}</button>
                 <button className="btn btn-primary" onClick={(e) => {
                     e.preventDefault();
-                    modal(<EditorSaveModal markdown={markdown} expansion={resource?.expansion.id || null} category={resource?.category.id || null} id={resource?.id || null} pageName={resource?.pageName || null} onSave={getResource} />);
+                    modal(<EditorSaveModal markdown={markdown} tier={resource?.category.hasTiers ? resource?.tier?.id || null : null} category={resource?.category.id || null} id={resource?.id || null} pageName={resource?.pageName || null} onSave={getResource} />);
                 }}>Save</button>
             </div>
             <div className="mt-1 d-flex flex-grow-1">
@@ -234,16 +234,16 @@ export default function Editor() {
     );
 }
 
-function EditorSaveModal({ pageName, markdown, category, expansion, id, onSave }: { pageName?: string, markdown: string, category?: string, expansion?: string, id?: string, onSave: () => void }) {
+function EditorSaveModal({ pageName, markdown, category, tier, id, onSave }: { pageName?: string, markdown: string, category?: string, tier?: string, id?: string, onSave: () => void }) {
     const modal = useModal();
     const request = useRequest().request;
     const toast = useToast().toast;
     const navigate = useNavigate();
     const [pageNameInternal, setPageNameInternal] = useState<string>(pageName || "");
     const [categoryInternal, setCategoryInternal] = useState<string>(category || "");
-    const [expansionInternal, setExpansionInternal] = useState<string>(expansion || "");
+    const [tierInternal, setTierInternal] = useState<string>(tier || "");
     const [categories, setCategories] = useState<Category[]>([]);
-    const [expansions, setExpansions] = useState<Expansion[]>([]);
+    const [tiers, setTiers] = useState<Tier[]>([]);
     const [validation, setValidation] = useState<Record<string, string>>({});
     const allowedTitleChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_ ()!@#$%^&*+=[]{}|;:,./<>?~`";
     const charLimit = 50;
@@ -276,14 +276,16 @@ function EditorSaveModal({ pageName, markdown, category, expansion, id, onSave }
         if (validationInternal["category"] === undefined) {
             validationInternal["category"] = "";
         }
-        if (!expansionInternal) {
-            validationInternal["expansion"] = "Expansion cannot be empty";
-        }
-        if (!expansions.map(t => t.id).includes(expansionInternal)) {
-            validationInternal["expansion"] = `Selected expansion does not exist`;
-        }
-        if (validationInternal["expansion"] === undefined) {
-            validationInternal["expansion"] = "";
+        if (categoryInternal !== "" && categories.find(c => c.id === categoryInternal).hasTiers) {
+            if (!tierInternal) {
+                validationInternal["tier"] = "Tier cannot be empty";
+            }
+            if (!tiers.map(t => t.id).includes(tierInternal)) {
+                validationInternal["tier"] = `Selected tier does not exist`;
+            }
+            if (validationInternal["tier"] === undefined) {
+                validationInternal["tier"] = "";
+            }
         }
         setValidation(validationInternal);
         for (const key in validationInternal) {
@@ -301,11 +303,12 @@ function EditorSaveModal({ pageName, markdown, category, expansion, id, onSave }
             var res: Resource =
             {
                 categoryId: categoryInternal,
-                expansionId: expansionInternal,
                 htmlContent: clean,
                 markdownContent: markdown,
                 pageName: pageNameInternal
             }
+            if (categoryInternal !== "" && categories.find(c => c.id === categoryInternal).hasTiers)
+                res.tierId = tierInternal;
             if (id)
                 res.id = id;
             const req = await request("/api/resources", {
@@ -340,17 +343,17 @@ function EditorSaveModal({ pageName, markdown, category, expansion, id, onSave }
         getCategories();
     }, [setCategories]);
 
-    async function getExpansions() {
-        const res = await request("/api/resources/expansions");
+    async function getTiers() {
+        const res = await request("/api/resources/tiers");
         if (!res.ok)
             return;
-        const expansions = await res.json() as Expansion[];
-        setExpansions(expansions);
+        const tiers = await res.json() as Tier[];
+        setTiers(tiers);
     }
 
     useEffect(() => {
-        getExpansions();
-    }, [setExpansions]);
+        getTiers();
+    }, [setTiers]);
 
     function getValidation(key: string) {
         var val = validation[key];
@@ -385,18 +388,19 @@ function EditorSaveModal({ pageName, markdown, category, expansion, id, onSave }
                         </select>
                         {validation["category"] && <div className="invalid-feedback">{validation["category"]}</div>}
                     </div>
-                    <div className="form-group">
-                        <label htmlFor="expansion">Expansion</label>
-                        <select className={"form-control" + (getValidation("expansion"))} id="expansion" value={expansionInternal} onChange={(e) => {
-                            setExpansionInternal(e.target.value);
-                        }}>
-                            <option selected={expansionInternal === ""}>Select an expansion</option>
-                            {expansions.map((expansion) => {
-                                return <option key={expansion.id} value={expansion.id} selected={expansion.id === expansionInternal}>{expansion.name}</option>
-                            })}
-                        </select>
-                        {validation["expansion"] && <div className="invalid-feedback">{validation["expansion"]}</div>}
-                    </div>
+                    {categoryInternal !== "" && categories.find(c => c.id === categoryInternal) && categories.find(c => c.id === categoryInternal).hasTiers &&
+                        <div className="form-group">
+                            <label htmlFor="tier">Tier</label>
+                            <select className={"form-control" + (getValidation("tier"))} id="tier" value={tierInternal} onChange={(e) => {
+                                setTierInternal(e.target.value);
+                            }}>
+                                <option selected={tierInternal === ""}>Select a tier</option>
+                                {tiers.map((tier) => {
+                                    return <option key={tier.id} value={tier.id} selected={tier.id === tierInternal}>{tier.name}</option>
+                                })}
+                            </select>
+                            {validation["tier"] && <div className="invalid-feedback">{validation["tier"]}</div>}
+                        </div>}
                 </div>
                 <div className="modal-footer">
                     <button className="btn btn-primary" onClick={() => save()}>Save</button>
