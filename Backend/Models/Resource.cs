@@ -1,4 +1,4 @@
-﻿namespace PDPWebsite.Models;
+﻿namespace DERPWebsite.Models;
 
 public record Resource(Guid? Id, Guid CategoryId, Guid? TierId, string HtmlContent, string MarkdownContent, string PageName, ulong WriterId, bool Published)
 {

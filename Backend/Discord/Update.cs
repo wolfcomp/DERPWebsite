@@ -1,8 +1,9 @@
 ﻿using System.Text;
+using DERPWebsite.Services;
 using Discord;
 using Discord.WebSocket;
 
-namespace PDPWebsite.Discord;
+namespace DERPWebsite.Discord;
 
 [SlashCommand("check-update", "Checks for FFXIV game data updates", GuildPermission.ManageChannels)]
 public class Update : ISlashCommandProcessor

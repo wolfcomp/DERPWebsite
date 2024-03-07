@@ -1,6 +1,6 @@
 ﻿using Discord.WebSocket;
 
-namespace PDPWebsite.Models;
+namespace DERPWebsite.Models;
 
 public record AboutInfo(ulong Id, string Description, string? VisualName)
 {

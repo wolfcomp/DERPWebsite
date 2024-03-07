@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using Discord;
 
-namespace PDPWebsite.Discord;
+namespace DERPWebsite.Discord.Voice;
 
 public partial class VoiceAdmin
 {

@@ -1,4 +1,6 @@
-﻿namespace PDPWebsite.Services;
+﻿using DERPWebsite.Models;
+
+namespace DERPWebsite.Services;
 
 public class Database : DbContext
 {

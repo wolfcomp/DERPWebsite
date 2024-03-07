@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc.Filters;
+﻿using DERPWebsite.Models;
+using DERPWebsite.Services;
+using Microsoft.AspNetCore.Mvc.Filters;
 
-namespace PDPWebsite.Middlewares;
+namespace DERPWebsite.Middlewares;
 
 public class AuthFilter : IAsyncActionFilter
 {

@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using StackExchange.Redis;
 
-namespace PDPWebsite.Services;
+namespace DERPWebsite.Services;
 
 public class RedisClient
 {

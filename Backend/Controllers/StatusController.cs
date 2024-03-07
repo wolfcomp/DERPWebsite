@@ -1,9 +1,10 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using DERPWebsite.Services;
 using Lumina.Excel.GeneratedSheets;
 using Lumina.Text;
 
-namespace PDPWebsite.Controllers;
+namespace DERPWebsite.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

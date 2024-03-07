@@ -1,11 +1,11 @@
-﻿using Newtonsoft.Json;
-using PDPWebsite.FFXIV;
+﻿using DERPWebsite.FFXIV;
+using Newtonsoft.Json;
 using ScottPlot;
 using ScottPlot.TickGenerators;
 using ScottPlot.TickGenerators.TimeUnits;
 using Color = ScottPlot.Color;
 
-namespace PDPWebsite.Universalis
+namespace DERPWebsite.Universalis
 {
     public record History
     {
@@ -95,7 +95,7 @@ namespace PDPWebsite.Universalis
             var list = salesTmp.Select(f => new ProcessedSale(f)).OrderBy(t => t.Date).ToList();
             var timeSpan = list.Last().Date - list.First().Date;
             var days = timeSpan.Days / 7;
-            (ITimeUnit timeUnit, int interval) unit = new (new Day(), days);
+            (ITimeUnit timeUnit, int interval) unit = new(new Day(), days);
             if (days == 0)
             {
                 unit.timeUnit = new Hour();

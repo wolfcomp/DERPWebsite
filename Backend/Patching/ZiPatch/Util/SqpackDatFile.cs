@@ -5,11 +5,11 @@
 
 using System.Text;
 
-namespace PDPWebsite.Patching.ZiPatch.Util
+namespace DERPWebsite.Patching.ZiPatch.Util
 {
     class SqpackDatFile : SqpackFile
     {
-        public SqpackDatFile(BinaryReader reader) : base(reader) {}
+        public SqpackDatFile(BinaryReader reader) : base(reader) { }
 
 
         protected override string GetFileName(ZiPatchConfig.PlatformId platform) =>

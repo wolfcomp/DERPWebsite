@@ -3,7 +3,7 @@
  * Modified to fit the needs of the project.
  */
 
-namespace PDPWebsite.Patching.ZiPatch
+namespace DERPWebsite.Patching.ZiPatch
 {
     public class ZiPatchException : Exception
     {

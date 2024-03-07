@@ -1,7 +1,8 @@
-﻿using Discord;
+﻿using DERPWebsite.Services;
+using Discord;
 using NLog.Targets;
 
-namespace PDPWebsite;
+namespace DERPWebsite;
 
 [Target("Discord")]
 public class DiscordLogger : TargetWithLayout
@@ -79,7 +80,7 @@ public class DiscordLogger : TargetWithLayout
             return;
         }
         if (Connection.ShouldLog(logEvent.Level))
-            return; 
+            return;
         WriteDiscord(logEvent);
     }
 }

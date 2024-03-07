@@ -3,7 +3,7 @@
  * Modified to fit the needs of the project.
  */
 
-namespace PDPWebsite.Patching.Util
+namespace DERPWebsite.Patching.Util
 {
     /// <summary>
     /// Performs the 32-bit reversed variant of the cyclic redundancy check algorithm
@@ -17,7 +17,7 @@ namespace PDPWebsite.Patching.Util
             {
                 var k = (uint)i;
                 for (var j = 0; j < 8; j++)
-                    k = (k & 1) != 0 ? 
+                    k = (k & 1) != 0 ?
                         (k >> 1) ^ POLY :
                         k >> 1;
 

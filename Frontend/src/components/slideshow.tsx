@@ -25,7 +25,7 @@ export function useSlideshow() {
     return useContext(ImagesContext);
 }
 
-const urlPath = "https://pdp.wildwolf.dev/files/victoryposes/";
+const urlPath = "https://derp.wildwolf.dev/files/victoryposes/";
 
 async function getImages(path?: string) {
     const resp = await fetch(urlPath + (path ? path : ""));

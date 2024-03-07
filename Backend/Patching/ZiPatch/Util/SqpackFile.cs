@@ -3,9 +3,9 @@
  * Modified to fit the needs of the project.
  */
 
-using PDPWebsite.Patching.Util;
+using DERPWebsite.Patching.Util;
 
-namespace PDPWebsite.Patching.ZiPatch.Util
+namespace DERPWebsite.Patching.ZiPatch.Util
 {
     public abstract class SqpackFile : SqexFile
     {

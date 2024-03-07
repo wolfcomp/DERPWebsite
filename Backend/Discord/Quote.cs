@@ -1,8 +1,9 @@
 ﻿using System.Globalization;
+using DERPWebsite.Services;
 using Discord;
 using Discord.WebSocket;
 
-namespace PDPWebsite.Discord;
+namespace DERPWebsite.Discord;
 
 [SlashCommand("quote", "collection of quote related commands")]
 public class Quote : ISlashCommandProcessor

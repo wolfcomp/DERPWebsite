@@ -1,15 +1,15 @@
 ﻿using System.Collections.Immutable;
 using System.Text;
+using DERPWebsite.FFXIV;
+using DERPWebsite.Patching;
 using Discord;
 using Discord.Rest;
 using Lumina;
 using Lumina.Data;
 using Lumina.Data.Files;
 using Lumina.Excel;
-using PDPWebsite.FFXIV;
-using PDPWebsite.Patching;
 
-namespace PDPWebsite.Services;
+namespace DERPWebsite.Services;
 
 public class GameClient : IDisposable
 {

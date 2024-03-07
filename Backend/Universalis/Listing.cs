@@ -2,7 +2,7 @@
 using ScottPlot;
 using Color = ScottPlot.Color;
 
-namespace PDPWebsite.Universalis
+namespace DERPWebsite.Universalis
 {
     public record Listing
     {

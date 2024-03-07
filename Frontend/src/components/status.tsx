@@ -4,7 +4,7 @@ import { chunk } from "./linq";
 import { Tooltip } from "bootstrap";
 import "./status.scss";
 
-const filePath = 'https://pdp.wildwolf.dev/files/game_icons/{0}/{1}_hr1.png';
+const filePath = '/files/game_icons/{0}/{1}_hr1.png';
 
 export function Status(props: { status: Status, scale: number }) {
     const { status, scale } = props;

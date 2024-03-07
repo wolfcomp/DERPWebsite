@@ -1,7 +1,8 @@
 ﻿using System.Reflection;
+using DERPWebsite.Services;
 using Discord;
 
-namespace PDPWebsite.Discord;
+namespace DERPWebsite.Discord;
 
 public interface ISlashCommandProcessor
 {
@@ -44,7 +45,7 @@ public class SlashCommandAttribute : Attribute
         builder.WithName(Name);
         if (!string.IsNullOrWhiteSpace(Description))
             builder.WithDescription(Description);
-        if(Permission.HasValue)
+        if (Permission.HasValue)
             throw new InvalidOperationException("Permission cannot be set on a sub command or argument");
     }
 }
@@ -71,7 +72,7 @@ public class AllowedChannelAttribute : Attribute
     {
         ChannelId = channelId;
     }
-}   
+}
 
 public static class Extensions
 {

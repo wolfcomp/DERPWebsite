@@ -1,12 +1,12 @@
-using Discord.Net;
-using Discord.WebSocket;
-using Discord;
-using Newtonsoft.Json;
-using PDPWebsite.Discord;
 using System.Reflection;
+using DERPWebsite.Discord;
+using Discord;
+using Discord.Net;
 using Discord.Rest;
+using Discord.WebSocket;
+using Newtonsoft.Json;
 
-namespace PDPWebsite.Services;
+namespace DERPWebsite.Services;
 
 public partial class DiscordConnection
 {

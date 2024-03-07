@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.4.33205.214
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PDPWebsite", "Backend\PDPWebsite.csproj", "{12779CF0-E12D-4C20-8584-2AD0E06E8DD1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DERPWebsite", "Backend\DERPWebsite.csproj", "{12779CF0-E12D-4C20-8584-2AD0E06E8DD1}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsolePatcher", "ConsolePatcher\ConsolePatcher.csproj", "{D2E2EF7C-4CB0-4800-93B8-9CBB6FE83648}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetStone", "NetStone\NetStone\NetStone.csproj", "{62C01B02-6A44-450C-9F81-3CC7B37EE6E2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestingGround", "TestingGround\TestingGround.csproj", "{27772001-2795-42E4-AD66-99CD9BCF03A0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestingGround", "TestingGround\TestingGround.csproj", "{27772001-2795-42E4-AD66-99CD9BCF03A0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

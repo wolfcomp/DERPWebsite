@@ -3,10 +3,10 @@
  * Modified to fit the needs of the project.
  */
 
-using PDPWebsite.Patching.Util;
-using PDPWebsite.Patching.ZiPatch.Util;
+using DERPWebsite.Patching.Util;
+using DERPWebsite.Patching.ZiPatch.Util;
 
-namespace PDPWebsite.Patching.ZiPatch.Chunk.SqpkCommand
+namespace DERPWebsite.Patching.ZiPatch.Chunk.SqpkCommand
 {
     class SqpkAddData : SqpkChunk
     {
@@ -22,7 +22,7 @@ namespace PDPWebsite.Patching.ZiPatch.Chunk.SqpkCommand
         public long BlockDataSourceOffset { get; protected set; }
 
 
-        public SqpkAddData(ChecksumBinaryReader reader, long offset, long size) : base(reader, offset, size) {}
+        public SqpkAddData(ChecksumBinaryReader reader, long offset, long size) : base(reader, offset, size) { }
 
         protected override void ReadChunk()
         {

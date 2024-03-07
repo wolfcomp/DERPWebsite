@@ -1,4 +1,4 @@
-﻿namespace PDPWebsite.Models;
+﻿namespace DERPWebsite.Models;
 
 public record Schedule(Guid? Id, string Name, ulong HostId, TimeSpan Duration, DateTime At)
 {

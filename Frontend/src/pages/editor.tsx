@@ -508,11 +508,11 @@ function FileCard({ file, onDelete }: { file: ResourceFile, onDelete: () => void
     return (
         <div className="card me-2 mb-2">
             <div className="card-body">
-                <img src={`https://pdp.wildwolf.dev/files/guides/${file.path}`} alt={file.name} style={{ maxWidth: "200px", maxHeight: "125px" }} />
+                <img src={`/files/guides/${file.path}`} alt={file.name} style={{ maxWidth: "200px", maxHeight: "125px" }} />
                 <div className="d-flex justify-content-between mt-2">
                     <button className="btn btn-primary" onClick={(e) => {
                         e.preventDefault();
-                        var html = `<img class="d-inline-block" src="https://pdp.wildwolf.dev/files/guides/${file.path}" alt="${file.name}" style="max-width: 600px; max-height: 300px;" />`
+                        var html = `<img class="d-inline-block" src="/files/guides/${file.path}" alt="${file.name}" style="max-width: 600px; max-height: 300px;" />`
                         navigator.clipboard.writeText(html);
                         toast("Copied HTML to clipboard", "FileCard", "success");
                     }}>Copy HTML</button>

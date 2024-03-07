@@ -1,7 +1,8 @@
-﻿using Lumina.Data.Files;
+﻿using DERPWebsite.Services;
+using Lumina.Data.Files;
 using SkiaSharp;
 
-namespace PDPWebsite.FFXIV;
+namespace DERPWebsite.FFXIV;
 
 public class Item
 {
@@ -20,7 +21,7 @@ public class Item
 
     private const string IconFileFormat = "ui/icon/{0:D3}000/{1}{2:D6}.tex";
     private const string IconHDFileFormat = "ui/icon/{0:D3}000/{1}{2:D6}_hr1.tex";
-    
+
     public unsafe SKBitmap? GetIconTexture()
     {
         var texFile = _gameData.GetTexFile(string.Format(IconHDFileFormat, Icon / 1000, string.Empty, Icon));

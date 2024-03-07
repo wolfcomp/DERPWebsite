@@ -35,7 +35,7 @@ export function Header() {
     return (
         <nav className='navbar navbar-expand-lg bg-body-tertiary navbar-shadow-bottom' style={{ zIndex: 1 }}>
             <div className='container-fluid'>
-                <Link to="/" className='navbar-brand'>PDP</Link>
+                <Link to="/" className='navbar-brand'>DERP</Link>
                 <div className="me-2 d-flex align-items-center">
                     <button className="navbar-toggler" type="button" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onClick={(e) => {
                         e.preventDefault();

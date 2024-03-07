@@ -1,4 +1,4 @@
-﻿namespace PDPWebsite.Middlewares;
+﻿namespace DERPWebsite.Middlewares;
 
 public class CorsMiddleware
 {

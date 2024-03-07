@@ -1,4 +1,4 @@
-﻿namespace PDPWebsite.Hubs;
+﻿namespace DERPWebsite.Hubs;
 
 public class MainHub : Hub
 {

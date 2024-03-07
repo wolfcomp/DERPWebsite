@@ -1,7 +1,10 @@
-﻿using Discord.WebSocket;
-using PDPWebsite.Hubs;
+﻿using DERPWebsite.Hubs;
+using DERPWebsite.Middlewares;
+using DERPWebsite.Models;
+using DERPWebsite.Services;
+using Discord.WebSocket;
 
-namespace PDPWebsite.Controllers;
+namespace DERPWebsite.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -45,7 +48,7 @@ public class AboutInfoController : ControllerBase
             var roleArr = role.Select(t => new AboutInfoRoles(t.Id, t.Name, t.Color.ToString())).ToArray();
             ret.Add(aboutInfo.Any(t => t.Id == socketGuildUser.Id)
                 ? AboutInfoExtended.FromInfo(aboutInfo.First(t => t.Id == socketGuildUser.Id), socketGuildUser, roleArr)
-                : new AboutInfoExtended(socketGuildUser.Id, "",  socketGuildUser.GetDisplayAvatarUrl(), socketGuildUser.DisplayName, null, roleArr));
+                : new AboutInfoExtended(socketGuildUser.Id, "", socketGuildUser.GetDisplayAvatarUrl(), socketGuildUser.DisplayName, null, roleArr));
         }
         return Ok(ret);
     }

@@ -3,14 +3,14 @@
  * Modified to fit the needs of the project.
  */
 
-namespace PDPWebsite.Patching.ZiPatch.Util
+namespace DERPWebsite.Patching.ZiPatch.Util
 {
     public class SqexFileStream : FileStream
     {
         private static readonly byte[] WipeBuffer = new byte[1 << 16];
 
         public SqexFileStream(string path, FileMode mode) : base(path, mode, FileAccess.ReadWrite, FileShare.Read, 1 << 16)
-        {}
+        { }
 
         public static SqexFileStream WaitForStream(string path, FileMode mode, int tries = 5, int sleeptime = 1)
         {

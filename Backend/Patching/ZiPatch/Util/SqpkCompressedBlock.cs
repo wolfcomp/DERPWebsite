@@ -5,7 +5,7 @@
 
 using System.IO.Compression;
 
-namespace PDPWebsite.Patching.ZiPatch.Util
+namespace DERPWebsite.Patching.ZiPatch.Util
 {
     class SqpkCompressedBlock
     {

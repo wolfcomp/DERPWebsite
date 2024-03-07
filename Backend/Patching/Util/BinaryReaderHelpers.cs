@@ -8,7 +8,7 @@ using System.Text;
 
 // ReSharper disable InconsistentNaming
 
-namespace PDPWebsite.Patching.Util
+namespace DERPWebsite.Patching.Util
 {
     // https://stackoverflow.com/a/15274591
     static class BinaryReaderHelpers

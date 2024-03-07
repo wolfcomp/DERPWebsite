@@ -6,7 +6,7 @@ using Discord.WebSocket;
 using MSLogLevel = Microsoft.Extensions.Logging.LogLevel;
 using NLogLevel = NLog.LogLevel;
 
-namespace PDPWebsite.Services;
+namespace DERPWebsite.Services;
 
 public partial class DiscordConnection : IDisposable
 {

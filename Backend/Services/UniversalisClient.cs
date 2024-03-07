@@ -3,10 +3,10 @@ using System.Net.Http.Headers;
 using System.Reflection;
 using System.Runtime.Versioning;
 using System.Text;
+using DERPWebsite.Universalis;
 using Newtonsoft.Json;
-using PDPWebsite.Universalis;
 
-namespace PDPWebsite.Services
+namespace DERPWebsite.Services
 {
     public class UniversalisClient : HttpClient
     {

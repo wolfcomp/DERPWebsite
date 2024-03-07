@@ -1,9 +1,10 @@
-﻿using Discord;
-using SkiaSharp;
-using System.Text;
+﻿using System.Text;
+using DERPWebsite.Services;
+using Discord;
 using Discord.WebSocket;
+using SkiaSharp;
 
-namespace PDPWebsite.Discord;
+namespace DERPWebsite.Discord;
 
 [SlashCommand("market", "Market related commands")]
 public class Market : ISlashCommandProcessor

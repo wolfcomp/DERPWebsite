@@ -3,10 +3,10 @@
  * Modified to fit the needs of the project.
  */
 
-using PDPWebsite.Patching.Util;
-using PDPWebsite.Patching.ZiPatch.Util;
+using DERPWebsite.Patching.Util;
+using DERPWebsite.Patching.ZiPatch.Util;
 
-namespace PDPWebsite.Patching.ZiPatch.Chunk
+namespace DERPWebsite.Patching.ZiPatch.Chunk
 {
     public class EndOfFileChunk : ZiPatchChunk
     {
@@ -17,7 +17,7 @@ namespace PDPWebsite.Patching.ZiPatch.Chunk
             using var advanceAfter = new AdvanceOnDispose(Reader, Size);
         }
 
-        public EndOfFileChunk(ChecksumBinaryReader reader, long offset, long size) : base(reader, offset, size) {}
+        public EndOfFileChunk(ChecksumBinaryReader reader, long offset, long size) : base(reader, offset, size) { }
 
         public override string ToString()
         {

@@ -1,8 +1,8 @@
-﻿using Discord.WebSocket;
+﻿using System.Text.RegularExpressions;
 using Discord;
-using System.Text.RegularExpressions;
+using Discord.WebSocket;
 
-namespace PDPWebsite.Services;
+namespace DERPWebsite.Services;
 
 static partial class DiscordExtensions
 {

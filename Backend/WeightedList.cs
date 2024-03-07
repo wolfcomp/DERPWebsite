@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Text;
 
-namespace PDPWebsite;
+namespace DERPWebsite;
 
 /// <summary>
 /// This implements an algorithm for sampling from a discrete probability distribution via a generic list

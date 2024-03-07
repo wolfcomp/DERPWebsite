@@ -1,7 +1,8 @@
-﻿using Discord;
+﻿using DERPWebsite.Services;
+using Discord;
 using Discord.WebSocket;
 
-namespace PDPWebsite.Discord;
+namespace DERPWebsite.Discord;
 
 [SlashCommand("voice", "Temp Voice related commands"), AllowedChannel(1065927404238942259)]
 public partial class Voice : ISlashCommandProcessor

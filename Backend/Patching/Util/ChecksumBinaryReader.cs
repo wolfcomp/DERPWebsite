@@ -3,13 +3,13 @@
  * Modified to fit the needs of the project.
  */
 
-namespace PDPWebsite.Patching.Util
+namespace DERPWebsite.Patching.Util
 {
     public class ChecksumBinaryReader : BinaryReader
     {
         private readonly Crc32 _crc32 = new();
 
-        public ChecksumBinaryReader(Stream input) : base(input) {}
+        public ChecksumBinaryReader(Stream input) : base(input) { }
 
 
         public void InitCrc32()

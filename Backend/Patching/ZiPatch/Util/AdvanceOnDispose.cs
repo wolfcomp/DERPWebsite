@@ -3,7 +3,7 @@
  * Modified to fit the needs of the project.
  */
 
-namespace PDPWebsite.Patching.ZiPatch.Util;
+namespace DERPWebsite.Patching.ZiPatch.Util;
 
 public sealed class AdvanceOnDispose : IDisposable
 {

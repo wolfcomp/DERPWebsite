@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace PDPWebsite.Universalis
+namespace DERPWebsite.Universalis
 {
     public record Datacenter
     {

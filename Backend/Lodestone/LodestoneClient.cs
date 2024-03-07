@@ -1,8 +1,9 @@
-﻿using Lumina.Data;
+﻿using DERPWebsite.Services;
+using Lumina.Data;
 using Lumina.Excel.GeneratedSheets;
 using NetStone.GameData;
 
-namespace PDPWebsite.Lodestone;
+namespace DERPWebsite.Lodestone;
 
 public class LodestoneGameClient : IGameDataProvider
 {

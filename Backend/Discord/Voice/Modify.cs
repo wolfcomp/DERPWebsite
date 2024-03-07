@@ -1,8 +1,9 @@
 ﻿using System.Text;
 using Discord;
+using Discord.Rest;
 using Discord.WebSocket;
 
-namespace PDPWebsite.Discord;
+namespace DERPWebsite.Discord.Voice;
 
 public partial class Voice
 {
@@ -22,7 +23,7 @@ public partial class Voice
             await _arg.ModifyOriginalResponseAsync(msg => msg.Content = "Owner is still in the channel");
             return;
         }
-        _discord.TempChannels.AddOrUpdate(channel.Id, _ => user.Id, (_,_) => user.Id);
+        _discord.TempChannels.AddOrUpdate(channel.Id, _ => user.Id, (_, _) => user.Id);
         await _arg.ModifyOriginalResponseAsync(msg => msg.Content = "Claimed channel");
     }
 
@@ -85,7 +86,7 @@ public partial class Voice
             return;
         }
         var regions = await _discord.DiscordClient.GetVoiceRegionsAsync();
-        var targetRegion = regions.FirstOrDefault(x => string.Equals(x.Name, region, StringComparison.InvariantCultureIgnoreCase)) ?? regions.FirstOrDefault(x => string.Equals(x.Id, region, StringComparison.InvariantCultureIgnoreCase));
+        var targetRegion = Enumerable.FirstOrDefault<RestVoiceRegion>(regions, x => string.Equals(x.Name, region, StringComparison.InvariantCultureIgnoreCase)) ?? Enumerable.FirstOrDefault<RestVoiceRegion>(regions, x => string.Equals(x.Id, region, StringComparison.InvariantCultureIgnoreCase));
         if (targetRegion == null)
         {
             await _arg.ModifyOriginalResponseAsync(msg => msg.Content = "Region not found check `/voice list-regions`");
@@ -148,6 +149,6 @@ public partial class Voice
         {
             x.Bitrate = bitrate.Value;
         });
-        await _arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Set bitrate to {bitrate/1000}kbps");
+        await _arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Set bitrate to {bitrate / 1000}kbps");
     }
 }

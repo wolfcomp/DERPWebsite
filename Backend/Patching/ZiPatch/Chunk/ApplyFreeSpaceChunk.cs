@@ -3,10 +3,10 @@
  * Modified to fit the needs of the project.
  */
 
-using PDPWebsite.Patching.Util;
-using PDPWebsite.Patching.ZiPatch.Util;
+using DERPWebsite.Patching.Util;
+using DERPWebsite.Patching.ZiPatch.Util;
 
-namespace PDPWebsite.Patching.ZiPatch.Chunk
+namespace DERPWebsite.Patching.ZiPatch.Chunk
 {
     public class ApplyFreeSpaceChunk : ZiPatchChunk
     {
@@ -24,7 +24,7 @@ namespace PDPWebsite.Patching.ZiPatch.Chunk
             UnknownFieldB = Reader.ReadInt64BE();
         }
 
-        public ApplyFreeSpaceChunk(ChecksumBinaryReader reader, long offset, long size) : base(reader, offset, size) {}
+        public ApplyFreeSpaceChunk(ChecksumBinaryReader reader, long offset, long size) : base(reader, offset, size) { }
 
         public override string ToString()
         {

@@ -1,8 +1,8 @@
-﻿using Discord.Net;
+﻿using Discord;
+using Discord.Net;
 using Discord.WebSocket;
-using Discord;
 
-namespace PDPWebsite.Services;
+namespace DERPWebsite.Services;
 
 public partial class DiscordConnection
 {

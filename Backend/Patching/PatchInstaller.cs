@@ -5,13 +5,13 @@
 
 using System.Collections.Concurrent;
 using System.Net;
+using DERPWebsite.Patching.ZiPatch;
+using DERPWebsite.Patching.ZiPatch.Util;
 using GraphQL;
 using GraphQL.Client.Http;
 using GraphQL.Client.Serializer.SystemTextJson;
-using PDPWebsite.Patching.ZiPatch;
-using PDPWebsite.Patching.ZiPatch.Util;
 
-namespace PDPWebsite.Patching;
+namespace DERPWebsite.Patching;
 
 public class PatchInstaller
 {

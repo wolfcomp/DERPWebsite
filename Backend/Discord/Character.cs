@@ -5,7 +5,7 @@ using NetStone;
 using NetStone.Search.Character;
 using SkiaSharp;
 
-namespace PDPWebsite.Discord;
+namespace DERPWebsite.Discord;
 
 // [SlashCommand("character", "A collection of character commands tied to lodestone")]
 // public partial class Character : ISlashCommandProcessor

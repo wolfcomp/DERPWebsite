@@ -3,13 +3,13 @@
  * Modified to fit the needs of the project.
  */
 
-namespace PDPWebsite.Patching.ZiPatch.Util
+namespace DERPWebsite.Patching.ZiPatch.Util
 {
     public class SqexFile
     {
         public string RelativePath { get; set; }
 
-        protected SqexFile() {}
+        protected SqexFile() { }
 
         public SqexFile(string relativePath)
         {

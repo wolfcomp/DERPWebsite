@@ -1,6 +1,9 @@
-﻿using Discord.WebSocket;
+﻿using DERPWebsite.Middlewares;
+using DERPWebsite.Models;
+using DERPWebsite.Services;
+using Discord.WebSocket;
 
-namespace PDPWebsite.Controllers;
+namespace DERPWebsite.Controllers;
 
 [ApiController]
 public class AuthController : ControllerBase

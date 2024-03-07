@@ -1,4 +1,4 @@
-﻿namespace PDPWebsite.Services;
+﻿namespace DERPWebsite.Services;
 
 public class EnvironmentContainer
 {

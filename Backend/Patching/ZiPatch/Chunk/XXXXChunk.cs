@@ -3,10 +3,10 @@
  * Modified to fit the needs of the project.
  */
 
-using PDPWebsite.Patching.Util;
-using PDPWebsite.Patching.ZiPatch.Util;
+using DERPWebsite.Patching.Util;
+using DERPWebsite.Patching.ZiPatch.Util;
 
-namespace PDPWebsite.Patching.ZiPatch.Chunk
+namespace DERPWebsite.Patching.ZiPatch.Chunk
 {
     // ReSharper disable once InconsistentNaming
     public class XXXXChunk : ZiPatchChunk
@@ -19,7 +19,7 @@ namespace PDPWebsite.Patching.ZiPatch.Chunk
             using var advanceAfter = new AdvanceOnDispose(Reader, Size);
         }
 
-        public XXXXChunk(ChecksumBinaryReader reader, long offset, long size) : base(reader, offset, size) {}
+        public XXXXChunk(ChecksumBinaryReader reader, long offset, long size) : base(reader, offset, size) { }
 
         public override string ToString()
         {

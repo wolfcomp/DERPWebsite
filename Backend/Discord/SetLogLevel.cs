@@ -1,8 +1,9 @@
-﻿using Discord;
+﻿using DERPWebsite.Services;
+using Discord;
 using Discord.WebSocket;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
-namespace PDPWebsite.Discord;
+namespace DERPWebsite.Discord;
 
 [SlashCommand("log-level", "Sets the log level for the bot", GuildPermission.ManageChannels)]
 public class SetLogLevel : ISlashCommandProcessor

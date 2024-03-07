@@ -3,10 +3,10 @@
  * Modified to fit the needs of the project.
  */
 
-using PDPWebsite.Patching.Util;
-using PDPWebsite.Patching.ZiPatch.Util;
+using DERPWebsite.Patching.Util;
+using DERPWebsite.Patching.ZiPatch.Util;
 
-namespace PDPWebsite.Patching.ZiPatch.Chunk.SqpkCommand
+namespace DERPWebsite.Patching.ZiPatch.Chunk.SqpkCommand
 {
     internal class SqpkTargetInfo : SqpkChunk
     {
@@ -28,7 +28,7 @@ namespace PDPWebsite.Patching.ZiPatch.Chunk.SqpkCommand
         public ulong DeletedDataSize { get; protected set; }
         public ulong SeekCount { get; protected set; }
 
-        public SqpkTargetInfo(ChecksumBinaryReader reader, long offset, long size) : base(reader, offset, size) {}
+        public SqpkTargetInfo(ChecksumBinaryReader reader, long offset, long size) : base(reader, offset, size) { }
 
         protected override void ReadChunk()
         {

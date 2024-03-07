@@ -3,10 +3,10 @@
  * Modified to fit the needs of the project.
  */
 
-using PDPWebsite.Patching.ZiPatch.Chunk;
-using PDPWebsite.Patching.ZiPatch.Util;
+using DERPWebsite.Patching.ZiPatch.Chunk;
+using DERPWebsite.Patching.ZiPatch.Util;
 
-namespace PDPWebsite.Patching.ZiPatch
+namespace DERPWebsite.Patching.ZiPatch
 {
     public class ZiPatchFile : IDisposable
     {

@@ -1,8 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
-using PDPWebsite.Hubs;
-using PDPWebsite.Models;
+﻿using DERPWebsite.Hubs;
+using DERPWebsite.Middlewares;
+using DERPWebsite.Models;
+using DERPWebsite.Services;
 
-namespace PDPWebsite.Controllers;
+namespace DERPWebsite.Controllers;
 
 [ApiController]
 [Route("/api/[controller]/")]

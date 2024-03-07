@@ -1,7 +1,10 @@
 ﻿using System.Diagnostics;
+using DERPWebsite.Middlewares;
+using DERPWebsite.Models;
+using DERPWebsite.Services;
 using Swashbuckle.AspNetCore.Annotations;
 
-namespace PDPWebsite.Controllers;
+namespace DERPWebsite.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
