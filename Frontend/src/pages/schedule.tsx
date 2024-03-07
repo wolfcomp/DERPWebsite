@@ -11,7 +11,8 @@ function getFirstDate() {
     return DateTime.local().setZone("America/Los_Angeles").minus({ days: 1 }).startOf("week").plus({ days: 1 });
 }
 
-const heightConst = 38;
+const heightConst = 37.6;
+const staticHeightConst = 49.6;
 
 function mobileCheck() {
     let check = false;
@@ -148,7 +149,7 @@ function ScheduleTable(props: { schedules: Schedule[], dates: string[], times: s
             <div style={{ position: "relative" }}>
                 {schedules.map((schedule) => <ScheduleCard schedule={schedule} schedules={schedules} key={schedule.id} curTime={curTime} />)}
             </div>
-            {offset > 0 && <div style={{ position: "relative", right: 0, width: `${(100 / 7)}%`, top: topOffset + 50, left: `${leftOffset}%`, border: "7px solid transparent", borderLeft: `7px solid ${nowColor}`, borderRight: `7px solid ${nowColor}` }}><div style={{ height: 2, backgroundColor: nowColor }}></div></div>}
+            {offset > 0 && <div style={{ position: "relative", right: 0, width: `${(100 / 7)}%`, top: topOffset + staticHeightConst, left: `${leftOffset}%`, border: "7px solid transparent", borderLeft: `7px solid ${nowColor}`, borderRight: `7px solid ${nowColor}` }}><div style={{ height: 2, backgroundColor: nowColor }}></div></div>}
         </div>
     </div>);
 }

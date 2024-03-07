@@ -234,6 +234,10 @@ export default function Editor() {
     );
 }
 
+function TimelineEditor({ timeline }: { timeline: { name: string }[] }) {
+
+}
+
 function EditorSaveModal({ pageName, markdown, category, tier, id, onSave }: { pageName?: string, markdown: string, category?: string, tier?: string, id?: string, onSave: () => void }) {
     const modal = useModal();
     const request = useRequest().request;
@@ -395,7 +399,7 @@ function EditorSaveModal({ pageName, markdown, category, tier, id, onSave }: { p
                                 setTierInternal(e.target.value);
                             }}>
                                 <option selected={tierInternal === ""}>Select a tier</option>
-                                {tiers.map((tier) => {
+                                {tiers.filter(t => t.category.id === categoryInternal).map((tier) => {
                                     return <option key={tier.id} value={tier.id} selected={tier.id === tierInternal}>{tier.name}</option>
                                 })}
                             </select>

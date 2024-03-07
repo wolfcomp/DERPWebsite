@@ -157,7 +157,7 @@ export default function Slideshow(props: { children: React.ReactNode }) {
             </div>
             {!autoShift && <div className="slideshow-nav">
                 <div className="slideshow-nav-content">
-                    {imageRoulette.map((t, i) => <img key={i} className={"slideshow-nav-image" + (isActive(t) ? " active" : "")} src={`${urlPath}${t}`} onClick={(e) => {
+                    {imageRoulette.map((t, i) => <img key={i} alt={t.substring(t.lastIndexOf('/'))} className={"slideshow-nav-image" + (isActive(t) ? " active" : "")} src={`${urlPath}${t}`} onClick={(e) => {
                         e.preventDefault();
                         setImage(t);
                     }} />)}

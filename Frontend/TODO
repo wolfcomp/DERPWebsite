@@ -1,5 +1,5 @@
 ✔ Change resource display from Expansion > Type > List to Type > Tier > List or Type > List @done(24-03-06 15:54)
 ☐ Add timeline editor for resources
 ☐ Add a way to write multiple execution styles for a resource
-☐ Markdown support for the description
+☐ Split the schedule slot into two elements if it spans over 2 days
 ☐ Better embed editor than the current one

@@ -14,10 +14,11 @@ export default function SignalRProvider({ children }: { children: any }) {
     }
 
     return (children)
+    if (process.env.NODE_ENV === "development")
 
-    return (
-        <SignalRContext.Provider url={url}>
-            {children}
-        </SignalRContext.Provider>
-    );
+        return (
+            <SignalRContext.Provider url={url}>
+                {children}
+            </SignalRContext.Provider>
+        );
 }

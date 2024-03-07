@@ -10,8 +10,7 @@ const Slideshow = lazy(() => import("./components/slideshow"));
 const SignalRProvider = lazy(() => import("./components/signalr"));
 
 function Index() {
-    return (
-        // <StrictMode>
+    const baseRender = (
         <Suspense fallback={<Loader />}>
             <Slideshow>
                 <SignalRProvider>
@@ -23,7 +22,14 @@ function Index() {
                 </SignalRProvider>
             </Slideshow>
         </Suspense>
-        // </StrictMode >
+    )
+
+    if (process.env.NODE_ENV === "development")
+        return baseRender;
+    return (
+        <StrictMode>
+            {baseRender}
+        </StrictMode>
     );
 }
 

@@ -13,7 +13,7 @@ var About = lazy(() => import("./pages/about"));
 var Editor = lazy(() => import("./pages/editor"));
 var Resources = lazy(() => import("./pages/resources"));
 var Files = lazy(() => import("./pages/files"));
-var Map = lazy(() => import("./pages/map"));
+// var Map = lazy(() => import("./pages/map"));
 
 const baseUrl = document.getElementsByTagName("base")[0].getAttribute("href");
 

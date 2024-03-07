@@ -1,5 +1,5 @@
 import { useContext, createContext, useState, useEffect } from "react";
-import { RequestError, useRequest } from "./request";
+import { useRequest } from "./request";
 import { deleteCookie, getCookie, setCookie } from "./cookie";
 
 export const AuthContext = createContext<{
@@ -39,7 +39,7 @@ export function AuthProvider(props: any) {
     }
 
     async function logout() {
-        var resp = await request("/api/auth/logout?token=" + user.token, {
+        await request("/api/auth/logout?token=" + user.token, {
             method: "DELETE"
         });
         setUser(null);

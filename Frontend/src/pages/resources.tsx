@@ -142,12 +142,19 @@ export default function Resources() {
         return resources.filter(filterPredicate);
     }
 
-    function getTopView(func: Dispatch<SetStateAction<any>>) {
+    function getTitleName() {
         var title = "";
         if (selectedCategory)
             title = selectedCategory.name;
         if (selectedCategory.hasTiers && selectedTier)
             title = title.concat(` > ${selectedTier.name}`);
+        if (selectedResource)
+            title = title.concat(` > ${selectedResource.pageName}`);
+        return title;
+    }
+
+    function getTopView(func: Dispatch<SetStateAction<any>>) {
+        var title = getTitleName();
 
         return (
             <div className="row">
@@ -176,7 +183,7 @@ export default function Resources() {
                         <i className="bi bi-arrow-90deg-up me-2"></i>
                         <h5>Back</h5>
                     </div>
-                    <h1 className="me-2">{selectedResource.pageName}</h1>
+                    <h1 className="me-2">{getTitleName()}</h1>
                     <div className="d-flex align-content-center flex-wrap">
                         {auth.user &&
                             <button className="btn btn-primary" onClick={() => {
@@ -195,7 +202,7 @@ export default function Resources() {
                     <h1 className="me-auto">Resources</h1>
                     <div className="d-flex align-items-center">
                         {auth.user && <>
-                            {selectedCategory && selectedCategory.hasTiers && <button className="btn btn-primary" onClick={() => {
+                            {selectedCategory && selectedCategory.hasTiers && !selectedTier && <button className="btn btn-primary" onClick={() => {
                                 modal(<AddTierModal category={selectedCategory} onSubmit={getTiers} />);
                             }}>New Tier</button>}
                             <button className="btn btn-primary ms-3" onClick={() => {
@@ -246,7 +253,7 @@ function TierView({ tiers, onClick, category, resources }: { tiers: Tier[], onCl
 function TierItem({ tier, onClick, resources }: { tier: Tier, onClick: React.MouseEventHandler<HTMLLIElement>, resources: Resource[] }) {
     return (
         <li className="list-group-item d-flex align-items-center" onClick={onClick}>
-            <img src={tier.iconUrl} style={{ maxHeight: 68 }} />
+            <img src={tier.iconUrl} alt={tier.name} style={{ maxHeight: 68 }} />
             <h5 className="me-auto mb-0 ms-2">{tier.name}</h5>
             <span>{resources.filter(t => t.tier.id === tier.id).length} resources</span>
         </li>

@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { MouseEvent, ReactNode, useEffect, useRef, useState } from "react";
 import { useModal } from "../components/modal";
 import { Schedule } from "../structs/schedule";
 import { DateTime } from "luxon";
@@ -10,6 +10,8 @@ export default function ScheduleEditor(props: { mobile: boolean }) {
     const [schedules, setSchedules] = useState<Schedule[]>([]);
     const [page, setPage] = useState(0);
     const [pageSize, setPageSize] = useState(10);
+    const pageSizeRef = useRef<HTMLDivElement>(null);
+    const pageSizeDropdown = useRef<Dropdown>();
     const modal = useModal();
     const request = useRequest().request;
     const toast = useToast().toast;
@@ -21,14 +23,14 @@ export default function ScheduleEditor(props: { mobile: boolean }) {
         setSchedules(((await res.json()) as Schedule[]).map(t => new Schedule(t.id, t.name, t.hostId, t.hostName, t.duration, t.at)));
     }
 
-    function nextPage(e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) {
+    function nextPage(e: MouseEvent<HTMLAnchorElement>) {
         e.preventDefault();
         if (page + 1 < Math.ceil(schedules.length / pageSize)) {
             setPage(page + 1);
         }
     }
 
-    function prevPage(e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) {
+    function prevPage(e: MouseEvent<HTMLAnchorElement>) {
         e.preventDefault();
         if (page > 0) {
             setPage(page - 1);
@@ -36,7 +38,7 @@ export default function ScheduleEditor(props: { mobile: boolean }) {
     }
 
     function getPageButtons() {
-        function getButton(pageNumber: number, text?: string | ReactNode, func?: (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void, shouldDisable?: boolean) {
+        function getButton(pageNumber: number, text?: string | ReactNode, func?: (e: MouseEvent<HTMLAnchorElement>) => void, shouldDisable?: boolean) {
             if (!func)
                 func = () => setPage(pageNumber);
             return <li className={"page-item" + (page === pageNumber ? (shouldDisable ? " disabled" : " active") : "")} key={"page" + (shouldDisable ? func.name : pageNumber)}><a className="page-link" onClick={func}>{text || pageNumber + 1}</a></li>;
@@ -74,7 +76,9 @@ export default function ScheduleEditor(props: { mobile: boolean }) {
         return buttons;
     }
 
-    function setPageSizeAndReset(size: number) {
+    function setPageSizeAndReset(e: MouseEvent<HTMLAnchorElement>) {
+        e.preventDefault();
+        var size = parseInt(e.currentTarget.textContent || "10");
         setPageSize(size);
         setPage(0);
     }
@@ -157,6 +161,13 @@ export default function ScheduleEditor(props: { mobile: boolean }) {
         toast("Copied to clipboard", "Schedule Editor", "success");
     }
 
+    useEffect(() => {
+        if (pageSizeRef.current) {
+            pageSizeDropdown.current = new Dropdown(pageSizeRef.current);
+        }
+        return () => pageSizeDropdown.current?.dispose();
+    });
+
     return (
         <div className="mt-4 row pb-2 pt-2 rounded-3" style={{ backgroundColor: "rgba(0,0,0,0.8)" }}>
             <div className="d-flex mb-3">
@@ -170,7 +181,18 @@ export default function ScheduleEditor(props: { mobile: boolean }) {
                 {schedules.sort((a, b) => b.getStart().diff(a.getStart(), "days").days).slice(page * pageSize, page * pageSize + pageSize).map((schedule) => <ScheduleTableItem key={schedule.id} schedule={schedule} mobile={props.mobile} />)}
             </ul>
             <nav>
-                <div className="d-flex justify-content-end">
+                <div className="d-flex justify-content-end mt-2">
+                    <div className="dropdown me-2" ref={pageSizeRef}>
+                        <button className="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            {pageSize}
+                        </button>
+                        <ul className="dropdown-menu">
+                            <li><a className="dropdown-item" onClick={setPageSizeAndReset}>10</a></li>
+                            <li><a className="dropdown-item" onClick={setPageSizeAndReset}>20</a></li>
+                            <li><a className="dropdown-item" onClick={setPageSizeAndReset}>50</a></li>
+                            <li><a className="dropdown-item" onClick={setPageSizeAndReset}>100</a></li>
+                        </ul>
+                    </div>
                     <ul className="pagination col-4 text-center">
                         {getPageButtons()}
                     </ul>
@@ -198,7 +220,7 @@ function ScheduleTableItem(props: { schedule: Schedule, mobile: boolean }) {
         <li className="list-group-item">
             <div className="d-flex flex-wrap">
                 <span className={"me-3" + (mobile ? " col-12" : "")}><b>Name: </b>{schedule.name}</span>
-                <span className={"me-3" + (mobile ? " col-12" : "")}><b>Host: </b>{schedule.hostName}</span>
+                <span className={"me-3" + (mobile ? " col-12" : "")}><b>Host: </b>{schedule.hostName ?? (<i><sub style={{ bottom: 2, fontSize: "0.7rem" }}>N/A</sub></i>)}</span>
                 <span className={"me-3" + (mobile ? " col-12" : "")}><b>Duration: </b>{schedule.duration}</span>
                 <span className={"me-auto" + (mobile ? " col-12" : "")}><b>At: </b>{schedule.getStart().toLocaleString(DateTime.DATETIME_MED)}  <i ref={infoRef} className="bi bi-info-circle-fill"></i></span>
                 <div className="d-flex flex-wrap align-content-center">

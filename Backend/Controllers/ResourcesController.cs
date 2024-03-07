@@ -63,8 +63,8 @@ public class ResourcesController : ControllerBase
 #pragma warning disable CS8604 // Possible null reference argument.
             _database.Database.ExecuteSqlRaw(@"UPDATE ""Resources"" SET ""TierId"" = {0}, ""CategoryId"" = {1}, ""HtmlContent"" = {2}, ""MarkdownContent"" = {3}, ""PageName"" = {4}, ""Published"" = {5} WHERE ""Id"" = {6}", resourceHttp.TierId ?? resource.TierId, resourceHttp.CategoryId ?? resource.CategoryId, resourceHttp.HtmlContent ?? resource.HtmlContent, resourceHttp.MarkdownContent ?? resource.MarkdownContent, resourceHttp.PageName ?? resource.PageName, resourceHttp.Publish ?? resource.Published, resourceHttp.Id);
 #pragma warning restore CS8604 // Possible null reference argument.
+            _database.ChangeTracker.Clear();
         }
-        _database.ChangeTracker.Clear();
         _database.SaveChanges();
         resource = _database.Resources.Include(resource1 => resource1.Category).Include(resource1 => resource1.Tier).First(t => t.Id == resource.Id);
         return Ok(new
