@@ -37,11 +37,11 @@ builder.Services.AddSingleton<LodestoneGameClient>();
 //     LodestoneClient.GetClientAsync(provider.GetRequiredService<LodestoneGameClient>(), provider.GetRequiredService<ILogger<LodestoneClient>>()).ConfigureAwait(false)
 //         .GetAwaiter().GetResult());
 builder.Services.AddScoped<AuthFilter>();
-builder.Services.AddDbContext<Database>(conf => conf.UseNpgsql("Database=pdp;Username=postgres;Password=postgres;Host=localhost;"));
+builder.Services.AddDbContext<Database>(conf => conf.UseNpgsql("Database=derp;Username=postgres;Password=postgres;Host=localhost;"));
 builder.Services.AddSwaggerGen(c =>
 {
     c.EnableAnnotations();
-    c.SwaggerDoc("v1", new OpenApiInfo { Version = "v1", Description = "PDPWebsite API surface" });
+    c.SwaggerDoc("v1", new OpenApiInfo { Version = "v1", Description = "DERPWebsite API surface" });
     c.MapType<TimeSpan>(() => new OpenApiSchema { Type = "string", Format = "hh':'mm" });
     c.MapType<DateTime>(() => new OpenApiSchema { Type = "string", Format = "yyyy-MM-dd'T'hh:mm:ssZZ" });
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme

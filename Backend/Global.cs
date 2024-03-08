@@ -2,4 +2,4 @@
 global using Microsoft.AspNetCore.SignalR;
 global using Microsoft.EntityFrameworkCore;
 global using NLog;
-global using PDPWebsite.Services;
+global using DERPWebsite.Services;

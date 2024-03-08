@@ -3,7 +3,7 @@ using Discord;
 using Discord.Rest;
 using Discord.WebSocket;
 
-namespace DERPWebsite.Discord.Voice;
+namespace DERPWebsite.Discord;
 
 public partial class Voice
 {
