@@ -18,7 +18,7 @@ export default function Files() {
                     <button className="btn btn-primary" onClick={copyUrl}>Copy url</button>
                 </div>
             </div>
-            <iframe ref={ifrRef} src="https://pdp.wildwolf.dev/files" style={{ width: "100%", height: 900, background: "transparent" }} sandbox="allow-same-origin allow-scripts" allowTransparency={true} />
+            <iframe ref={ifrRef} src="https://derp.wildwolf.dev/files" style={{ width: "100%", height: 900, background: "transparent" }} sandbox="allow-same-origin allow-scripts" allowTransparency={true} />
         </div>
     )
 }

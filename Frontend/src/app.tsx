@@ -1,6 +1,6 @@
 import { lazy } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { Header } from "./components/partials";
+import { Footer, Header } from "./components/partials";
 import Modal from "./components/modal";
 import History from "./components/history";
 import SlideshowPage from "./pages/slideshow";
@@ -47,6 +47,7 @@ export default function App() {
                                 <Route path="*" element={<Home />} />
                             </Routes>
                         </div>
+                        <Footer />
                     </Modal>
                 </Toast>
             </History>

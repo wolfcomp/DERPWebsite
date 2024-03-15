@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useSlideshow } from "../components/slideshow";
 import { Tooltip } from "bootstrap";
+import { DateTime } from "luxon";
+import getString from "../components/text";
 
 export default function Slideshow() {
     const { expansion, setAutoShift, setBlured, setExpansion, setNavContent, autoShift, nextImage, prevImage, navContent } = useSlideshow();
     const [prevBlur, setPrevBlur] = useState<"default" | "blured" | "unblured">("default");
+    const [time, setTime] = useState<DateTime>(DateTime.local());
     const listRef = useRef<HTMLUListElement>(null);
 
     useEffect(() => {
@@ -23,6 +26,14 @@ export default function Slideshow() {
     }, []);
 
     useEffect(() => {
+        const interval = setInterval(() => {
+            setTime(DateTime.local());
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [setTime]);
+
+    useEffect(() => {
         if (!listRef.current) return;
         var tooltips = Array.from(listRef.current.children).map((t) => {
             const tooltip = new Tooltip(t, {
@@ -39,15 +50,15 @@ export default function Slideshow() {
     useEffect(() => {
         setNavContent(<>
             <ul className="navbar-nav" ref={listRef}>
-                <li className="navbar-item me-2" data-bs-title="A Realm Reborn"><button className={"btn " + (expansion === "main" ? "btn-primary" : "btn-secondary")} onClick={() => setExpansion("main")}>ARR</button></li>
-                <li className="navbar-item me-2" data-bs-title="Heavensward"><button className={"btn " + (expansion === "ex1" ? "btn-primary" : "btn-secondary")} onClick={() => setExpansion("ex1")}>HW</button></li>
-                <li className="navbar-item me-2" data-bs-title="Stormblood"><button className={"btn " + (expansion === "ex2" ? "btn-primary" : "btn-secondary")} onClick={() => setExpansion("ex2")}>SB</button></li>
-                <li className="navbar-item me-2" data-bs-title="Shadowbringers"><button className={"btn " + (expansion === "ex3" ? "btn-primary" : "btn-secondary")} onClick={() => setExpansion("ex3")}>ShB</button></li>
-                <li className="navbar-item me-2" data-bs-title="Endwalker"><button className={"btn " + (expansion === "ex4" ? "btn-primary" : "btn-secondary")} onClick={() => setExpansion("ex4")}>EW</button></li>
-                {/* <li className="navbar-item me-2" data-bs-title="Dawntrail"><button className={"btn " + (expansion === "ex5" ? "btn-primary" : "btn-secondary")} onClick={() => setExpansion("ex5")}>DT</button></li> */}
+                <li className="navbar-item me-2" data-bs-title={getString("slideshow", time)[0]}><button className={"btn " + (expansion === "main" ? "btn-primary" : "btn-secondary")} onClick={() => setExpansion("main")}>{getString("slideshow", time)[0]}</button></li>
+                <li className="navbar-item me-2" data-bs-title={getString("slideshow", time)[1]}><button className={"btn " + (expansion === "ex1" ? "btn-primary" : "btn-secondary")} onClick={() => setExpansion("ex1")}>{getString("slideshow", time)[1]}</button></li>
+                <li className="navbar-item me-2" data-bs-title={getString("slideshow", time)[2]}><button className={"btn " + (expansion === "ex2" ? "btn-primary" : "btn-secondary")} onClick={() => setExpansion("ex2")}>{getString("slideshow", time)[2]}</button></li>
+                <li className="navbar-item me-2" data-bs-title={getString("slideshow", time)[3]}><button className={"btn " + (expansion === "ex3" ? "btn-primary" : "btn-secondary")} onClick={() => setExpansion("ex3")}>{getString("slideshow", time)[3]}</button></li>
+                <li className="navbar-item me-2" data-bs-title={getString("slideshow", time)[4]}><button className={"btn " + (expansion === "ex4" ? "btn-primary" : "btn-secondary")} onClick={() => setExpansion("ex4")}>{getString("slideshow", time)[4]}</button></li>
+                <li className="navbar-item me-2" data-bs-title={getString("slideshow", time)[5]}><button className={"btn " + (expansion === "ex5" ? "btn-primary" : "btn-secondary")} onClick={() => setExpansion("ex5")}>{getString("slideshow", time)[5]}</button></li>
             </ul>
             <ul className="navbar-nav">
-                <li className="navbar-item"><button className={"btn btn-info me-2"} onClick={() => setAutoShift(!autoShift)}>{autoShift ? "Stop" : "Start"} auto shift</button></li>
+                <li className="navbar-item"><button className={"btn btn-info me-2"} onClick={() => setAutoShift(!autoShift)}>{getString("slideshowToggle", time)[autoShift ? 1 : 0]}</button></li>
             </ul>
         </>
         );
